@@ -1,0 +1,232 @@
+name: miraige
+
+services:
+
+  # ─── Shared state ─────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: miraige-redis
+    expose:
+      - "6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks: [miraige]
+
+  # ─── Target the demo protects ─────────────────────────────────────
+  fake_portal_prod:
+    build:
+      context: .
+      dockerfile: services/fake_portal/Dockerfile
+    container_name: miraige-portal-prod
+    environment:
+      MG_STRICT_SECRETS: ${MG_STRICT_SECRETS:-0}
+      INSTANCE_NAME: miraige-portal-prod
+      HONEYPOT_MODE: "0"
+      SENTINEL_URL: ${SENTINEL_URL:-http://sentinel:8001}
+      GHOST_SHELL_URL: ${GHOST_SHELL_URL:-http://ghost_shell:8080}
+      GHOST_GATE_TOKEN: ${GHOST_GATE_TOKEN:-mg-demo-gate}
+    ports:
+      - "${PORTAL_HOST_PORT:-8090}:8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; urllib.request.urlopen('http://localhost:8080/', timeout=3)"]
+      interval: 15s
+      timeout: 4s
+      retries: 5
+    depends_on:
+      - sentinel
+    networks: [miraige]
+
+  # ─── Mir[AI]ge control plane ──────────────────────────────────────
+  sentinel:
+    build:
+      context: .
+      dockerfile: services/sentinel/Dockerfile
+    container_name: miraige-sentinel
+    environment:
+      MG_STRICT_SECRETS: ${MG_STRICT_SECRETS:-0}
+      AI_ENDPOINTS_BASE_URL: ${AI_ENDPOINTS_BASE_URL:-}
+      AI_ENDPOINTS_API_KEY: ${AI_ENDPOINTS_API_KEY:-}
+      AI_MODEL_CLASSIFIER: ${AI_MODEL_CLASSIFIER:-Llama-3.1-8B-Instruct}
+      ORCHESTRATOR_URL: http://orchestrator:8002
+      A2A_SHARED_SECRET: ${A2A_SHARED_SECRET:-dev-secret}
+      SENTINEL_DETECTION_THRESHOLD: ${SENTINEL_DETECTION_THRESHOLD:-0.75}
+      ATTACK_VELOCITY_RPS_THRESHOLD: ${ATTACK_VELOCITY_RPS_THRESHOLD:-20}
+      SENTINEL_STUB: ${SENTINEL_STUB:-1}
+      TARGET_VM_NAME: ${TARGET_VM_NAME:-miraige-portal-prod}
+    expose:
+      - "8001"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; urllib.request.urlopen('http://localhost:8001/health', timeout=3)"]
+      interval: 15s
+      timeout: 4s
+      retries: 5
+    networks: [miraige]
+
+  orchestrator:
+    build:
+      context: .
+      dockerfile: services/orchestrator/Dockerfile
+    container_name: miraige-orchestrator
+    environment:
+      MG_STRICT_SECRETS: ${MG_STRICT_SECRETS:-0}
+      MCP_SERVER_URL: http://mcp_server:8003
+      A2A_SHARED_SECRET: ${A2A_SHARED_SECRET:-dev-secret}
+      RESOURCE_PREFIX: ${RESOURCE_PREFIX:-miraige}
+      LB_ID: ${LB_ID:-miraige-lb}
+      GHOST_POOL_ID: ${GHOST_POOL_ID:-miraige-pool-ghost}
+      HONEYPOT_TTL_SECONDS: ${HONEYPOT_TTL_SECONDS:-1800}
+      # Engagement state: redis = crash-safe + shared across instances (else 'memory').
+      ORCHESTRATOR_STATE_BACKEND: ${ORCHESTRATOR_STATE_BACKEND:-redis}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+    expose:
+      - "8002"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; urllib.request.urlopen('http://localhost:8002/health', timeout=3)"]
+      interval: 15s
+      timeout: 4s
+      retries: 5
+    depends_on:
+      - mcp_server
+      - redis
+    networks: [miraige]
+
+  mcp_server:
+    build:
+      context: .
+      dockerfile: services/mcp_server/Dockerfile
+    container_name: miraige-mcp-server
+    environment:
+      MG_STRICT_SECRETS: ${MG_STRICT_SECRETS:-0}
+      REROUTE_BACKEND: ${REROUTE_BACKEND:-mock}
+      RESOURCE_PREFIX: ${RESOURCE_PREFIX:-miraige}
+      OVH_ENDPOINT: ${OVH_ENDPOINT:-ovh-eu}
+      OVH_APPLICATION_KEY: ${OVH_APPLICATION_KEY:-}
+      OVH_APPLICATION_SECRET: ${OVH_APPLICATION_SECRET:-}
+      OVH_CONSUMER_KEY: ${OVH_CONSUMER_KEY:-}
+      OVH_PROJECT_ID: ${OVH_PROJECT_ID:-}
+      OVH_REGION: ${OVH_REGION:-}
+      LB_ID: ${LB_ID:-}
+      GHOST_POOL_ID: ${GHOST_POOL_ID:-}
+      GHOST_SHELL_URL: ${GHOST_SHELL_URL:-http://ghost_shell:8080}
+      GHOST_GATE_TOKEN: ${GHOST_GATE_TOKEN:-mg-demo-gate}
+      OS_AUTH_URL: ${OS_AUTH_URL:-}
+      OS_IDENTITY_API_VERSION: ${OS_IDENTITY_API_VERSION:-3}
+      OS_USERNAME: ${OS_USERNAME:-}
+      OS_PASSWORD: ${OS_PASSWORD:-}
+      OS_PROJECT_ID: ${OS_PROJECT_ID:-${OVH_PROJECT_ID:-}}
+      OS_PROJECT_NAME: ${OS_PROJECT_NAME:-}
+      OS_USER_DOMAIN_NAME: ${OS_USER_DOMAIN_NAME:-Default}
+      OS_PROJECT_DOMAIN_NAME: ${OS_PROJECT_DOMAIN_NAME:-Default}
+      OS_REGION_NAME: ${OS_REGION_NAME:-}
+    expose:
+      - "8003"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; urllib.request.urlopen('http://localhost:8003/health', timeout=3)"]
+      interval: 15s
+      timeout: 4s
+      retries: 5
+    networks: [miraige]
+
+  # ─── Ghost Shell · engagement procédural ─────────────────────────
+  ghost_shell:
+    build:
+      context: .
+      dockerfile: services/ghost_shell/Dockerfile
+    container_name: miraige-ghost-shell
+    # ── Cap anti-starvation (Dev A) : le leurre doit gaspiller le temps de l'ATTAQUANT,
+    #    pas sa propre VM hôte. Sans borne, le compute-wasting saturait l'unique vCPU du
+    #    d2-2 et affamait sshd (SSH bloqué). Bornes : 1 vCPU + 1 Go + 256 pids → laisse
+    #    ≥1 vCPU au système (sshd/docker/redis) sur les VMs 2 vCPU. Bon pour l'ASYMMETRIC_RATIO.
+    cpus: 1.0
+    mem_limit: 1g
+    mem_reservation: 256m
+    pids_limit: 256
+    environment:
+      MG_STRICT_SECRETS: ${MG_STRICT_SECRETS:-0}
+      REDIS_URL: redis://redis:6379/0
+      GHOST_SHELL_TTL_SECONDS: ${HONEYPOT_TTL_SECONDS:-1800}
+      SECRET_SALT: ${SECRET_SALT:-change-me-ghost-shell}
+      MIRAGE_METRICS_URL: ${MIRAGE_METRICS_URL:-http://mirage_metrics:8004}
+    extra_hosts:
+      - "mirage_metrics:${MIRAGE_METRICS_IP:-host-gateway}"
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; urllib.request.urlopen('http://localhost:8080/health', timeout=3)"]
+      interval: 15s
+      timeout: 4s
+      retries: 5
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks: [miraige]
+
+  # ─── Mirage Metrics · ASYMMETRIC_RATIO ───────────────────────────
+  mirage_metrics:
+    build:
+      context: .
+      dockerfile: services/mirage_metrics/Dockerfile
+    container_name: miraige-metrics
+    environment:
+      MG_STRICT_SECRETS: ${MG_STRICT_SECRETS:-0}
+      PRICING_YAML: services/mirage_metrics/pricing_2026_05.yaml
+      GRID_PRICE_EUR_PER_KWH: ${GRID_PRICE_EUR_PER_KWH:-}
+    expose:
+      - "8004"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; urllib.request.urlopen('http://localhost:8004/health', timeout=3)"]
+      interval: 15s
+      timeout: 4s
+      retries: 5
+    networks: [miraige]
+
+  # ─── BFF · single authenticated API gateway + SPA console ────────
+  api:
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
+    container_name: miraige-api
+    environment:
+      MG_STRICT_SECRETS: ${MG_STRICT_SECRETS:-0}
+      DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD:-change-me-dashboard-password}
+      DASHBOARD_TOKEN_SECRET: ${DASHBOARD_TOKEN_SECRET:-}
+      # RBAC: unset → one 'admin' from DASHBOARD_PASSWORD. Point MIRAIGE_USERS_FILE
+      # at a mounted users.json (see the volumes note below) for viewer/operator/admin.
+      AUTH_BACKEND: ${AUTH_BACKEND:-local}
+      MIRAIGE_USERS_FILE: ${MIRAIGE_USERS_FILE:-}
+      MG_RESET_SECRET: ${MG_RESET_SECRET:-miraige-reset-2026}
+      SENTINEL_URL: http://sentinel:8001
+      ORCHESTRATOR_URL: http://orchestrator:8002
+      MCP_SERVER_URL: http://mcp_server:8003
+      MIRAGE_METRICS_URL: http://mirage_metrics:8004
+      API_CORS_ORIGINS: ${API_CORS_ORIGINS:-*}
+      # Red-team launcher: target the portal in DIRECT mode (no LB to flatten the
+      # spoofed X-Forwarded-For), so each launch reads as its own Sentinel session.
+      ATTACK_TARGET: ${ATTACK_TARGET:-http://fake_portal_prod:8080}
+      # ai-agent level only — server-side LLM creds (else attack.py stays scripted).
+      AI_ENDPOINTS_BASE_URL: ${AI_ENDPOINTS_BASE_URL:-}
+      AI_ENDPOINTS_API_KEY: ${AI_ENDPOINTS_API_KEY:-}
+      AI_MODEL_GENERATOR: ${AI_MODEL_GENERATOR:-}
+    ports:
+      - "${API_HOST_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; urllib.request.urlopen('http://localhost:8000/api/v1/health', timeout=3)"]
+      interval: 15s
+      timeout: 4s
+      retries: 5
+    depends_on:
+      - sentinel
+      - orchestrator
+      - mcp_server
+      - mirage_metrics
+      - fake_portal_prod
+    # volumes:                              # RBAC multi-user: mount a users.json (rw so admins can
+    #   - ./users.json:/app/users.json:rw   #   manage from the console), set MIRAIGE_USERS_FILE=/app/users.json
+    networks: [miraige]
+
+networks:
+  miraige:
+    driver: bridge

@@ -1,0 +1,32 @@
+# Drop-in for an EXISTING Traefik using the file provider, e.g.:
+#   --providers.file.filename=/etc/traefik/miraige.yml   (or .directory=...)
+# The dashboard is published on 127.0.0.1:8000 by docker-compose.prod.yml.
+# Replace `le` with the name of your own ACME / cert resolver.
+http:
+  routers:
+    miraige:
+      rule: "Host(`miraige.example.com`)"
+      entryPoints: [websecure]
+      service: miraige
+      middlewares: [miraige-sec]
+      tls:
+        certResolver: le
+  middlewares:
+    # Browser security headers for the operator console. The websecure entryPoint
+    # terminates TLS, so HSTS (stsSeconds) is safe to emit.
+    miraige-sec:
+      headers:
+        frameDeny: true
+        contentTypeNosniff: true
+        referrerPolicy: "no-referrer"
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        contentSecurityPolicy: "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'"
+  services:
+    miraige:
+      loadBalancer:
+        servers:
+          # Trust boundary: Traefik is the edge and overwrites X-Forwarded-* from the
+          # real connection. Do NOT enable forwardedHeaders.insecure / trustedIPs,
+          # which would make it trust a client-supplied XFF.
+          - url: "http://127.0.0.1:8000"

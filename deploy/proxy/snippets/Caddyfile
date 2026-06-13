@@ -1,0 +1,18 @@
+# Drop-in for an EXISTING Caddy (append to your Caddyfile).
+# The dashboard is published on 127.0.0.1:8000 by docker-compose.prod.yml.
+# A real hostname gets an automatic Let's Encrypt certificate.
+miraige.example.com {
+	# Browser security headers for the operator console (Caddy terminates TLS,
+	# so HSTS is included). Applies to every response on this site.
+	header {
+		X-Frame-Options "DENY"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'"
+	}
+
+	# Trust boundary: Caddy is the edge — reverse_proxy sets X-Forwarded-For /
+	# X-Forwarded-Proto from the real connection and ignores any inbound XFF.
+	reverse_proxy 127.0.0.1:8000
+}

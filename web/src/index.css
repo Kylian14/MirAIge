@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+/* ── Mir[AI]ge design system · desert / sable ──────────────────────────
+   Reused from the existing console: warm sand surfaces, deep-brown ink,
+   the gold sun accent, and the semantic roles (ok / watch / alert / ghost).
+   Restrained product palette: the sun carries actions + key state only. */
+@theme {
+  --color-bg: #f2e9d6;          /* app background — real sand, not washed cream */
+  --color-surface: #fbf7ee;     /* panels / cards */
+  --color-surface-2: #f7efd9;   /* nested / inset */
+  --color-line: #e7d8ba;        /* hairline */
+  --color-line-strong: #d4be92; /* structural divider */
+  --color-ink: #2c2114;         /* primary text (7:1+ on surface) */
+  --color-ink-soft: #6b5a3f;    /* secondary text — brown, not gray */
+
+  --color-sun: #c99441;         /* accent: actions, selection, focus */
+  --color-sun-bright: #e0a94a;
+  --color-ok: #6b8e3d;          /* olive — healthy / contained */
+  --color-watch: #c99441;       /* ochre — assessing */
+  --color-alert: #b0432c;       /* terracotta — hostile / attacker spend */
+  --color-ghost: #7c6fa8;       /* purple — inside the decoy */
+  --color-oasis: #2c6e62;       /* teal — safe / real user */
+  --color-mirage: #4fa08f;      /* the brand "mirage" teal — wordmark brackets */
+
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-word: "Syncopate", system-ui, sans-serif;
+
+  --radius: 0.875rem;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  body {
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-display);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::placeholder {
+    color: #ab987a;
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--color-sun) 35%, transparent);
+  }
+  /* Focus: a single, consistent ring across every interactive element. */
+  :where(button, input, a, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-sun);
+    outline-offset: 2px;
+  }
+}
+
+/* The wordmark: MIR[AI]GE in the brand's geometric face. */
+.wordmark {
+  font-family: var(--font-word);
+  letter-spacing: 0.14em;
+  font-weight: 700;
+}
+
+/* A slow heat-shimmer for the login horizon — disabled under reduced motion. */
+@keyframes mirage-drift {
+  from { background-position: 0% 50%; }
+  to { background-position: 100% 50%; }
+}
+.dune {
+  background:
+    radial-gradient(circle 520px at 80% 18%, rgba(255, 222, 156, 0.45) 0%, transparent 60%),
+    linear-gradient(
+      180deg,
+      rgba(247, 239, 217, 0.42) 0%,
+      rgba(240, 226, 194, 0.32) 30%,
+      rgba(226, 205, 160, 0.24) 58%,
+      rgba(201, 176, 127, 0.32) 80%,
+      rgba(168, 137, 99, 0.46) 100%
+    ),
+    url("/desert-dune-1.jpg") center / cover no-repeat fixed,
+    linear-gradient(180deg, #f7efd9 0%, #c9b07f 100%);
+}
+.shimmer {
+  background-image: linear-gradient(
+    100deg,
+    transparent 30%,
+    color-mix(in oklab, var(--color-sun-bright) 28%, transparent) 50%,
+    transparent 70%
+  );
+  background-size: 220% 100%;
+  animation: mirage-drift 7s ease-in-out infinite alternate;
+}
+@media (prefers-reduced-motion: reduce) {
+  .shimmer {
+    animation: none;
+  }
+}

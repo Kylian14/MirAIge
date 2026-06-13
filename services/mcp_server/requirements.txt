@@ -1,0 +1,10 @@
+fastapi>=0.110
+uvicorn[standard]>=0.27
+pydantic>=2.6
+httpx>=0.27
+redis>=5.0          # REROUTE_BACKEND=redis (cloud-free inline-proxy backend)
+
+# OPTIONAL — only needed for a real OVH/OpenStack reroute (REROUTE_BACKEND=octavia).
+# The default mock backend (REROUTE_BACKEND=mock) does not import these.
+ovh>=1.2
+openstacksdk>=3.0

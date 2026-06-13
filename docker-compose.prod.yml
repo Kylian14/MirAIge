@@ -1,0 +1,99 @@
+# Production hardening overlay — use ON TOP of the base compose:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# vs the base file it:
+#   - stops publishing the internal services on the host
+#   - publishes the console (api) on 127.0.0.1:8000 only (loopback) so a reverse
+#     proxy can reach it without exposing it to the world
+#   - restarts every service unless explicitly stopped
+#   - forces MG_STRICT_SECRETS=1 (refuse to boot with a default/placeholder secret)
+#
+# Put a reverse proxy in front for TLS. Either point your EXISTING proxy
+# (nginx, Traefik, Caddy, HAProxy…) at 127.0.0.1:8000, or add ONE bundled proxy
+# overlay from deploy/proxy/ (see that folder and the README):
+#   …  -f deploy/proxy/caddy.yml    up -d   # auto-HTTPS, also works on localhost
+#   …  -f deploy/proxy/traefik.yml  up -d   # auto-HTTPS (needs a public domain)
+#   …  -f deploy/proxy/nginx.yml    up -d   # HTTP; mount certs for TLS
+#
+# Requires Docker Compose >= 2.24 (for the `!override` merge tag).
+
+services:
+
+  redis:
+    restart: unless-stopped
+    ports: !override []
+    security_opt:
+      - "no-new-privileges:true"
+    cap_drop:
+      - ALL
+
+  fake_portal_prod:
+    restart: unless-stopped
+    ports: !override []
+    security_opt:
+      - "no-new-privileges:true"
+    cap_drop:
+      - ALL
+    environment:
+      MG_STRICT_SECRETS: "1"
+
+  sentinel:
+    restart: unless-stopped
+    ports: !override []
+    security_opt:
+      - "no-new-privileges:true"
+    cap_drop:
+      - ALL
+    environment:
+      MG_STRICT_SECRETS: "1"
+
+  orchestrator:
+    restart: unless-stopped
+    ports: !override []
+    security_opt:
+      - "no-new-privileges:true"
+    cap_drop:
+      - ALL
+    environment:
+      MG_STRICT_SECRETS: "1"
+
+  mcp_server:
+    restart: unless-stopped
+    ports: !override []
+    security_opt:
+      - "no-new-privileges:true"
+    cap_drop:
+      - ALL
+    environment:
+      MG_STRICT_SECRETS: "1"
+
+  ghost_shell:
+    restart: unless-stopped
+    ports: !override []
+    security_opt:
+      - "no-new-privileges:true"
+    cap_drop:
+      - ALL
+    environment:
+      MG_STRICT_SECRETS: "1"
+
+  mirage_metrics:
+    restart: unless-stopped
+    ports: !override []
+    security_opt:
+      - "no-new-privileges:true"
+    cap_drop:
+      - ALL
+    environment:
+      MG_STRICT_SECRETS: "1"
+
+  api:
+    restart: unless-stopped
+    ports: !override ["127.0.0.1:8000:8000"]   # console + API on loopback — point a reverse proxy here
+    security_opt:
+      - "no-new-privileges:true"
+    cap_drop:
+      - ALL
+    environment:
+      MG_STRICT_SECRETS: "1"

@@ -1,0 +1,30 @@
+# P0.3 · CoreDNS — une zone autoritative DISTINCTE par persona.
+# NS / SOA serial / TTL différents par zone => `dig` ne révèle pas un backend
+# unique (CERTainty PETS 2023 : <10 dig suffisent à corréler sinon). ADR-018.
+#
+# Lancer depuis ce dossier : coredns -conf Corefile
+# (port 53 => CAP_NET_BIND_SERVICE, ou mapper un port haut en dev)
+
+portal.miraige.lab:53 {
+    file portal_ovh.zone
+    log
+    errors
+}
+
+db.miraige.lab:53 {
+    file mysql.zone
+    log
+    errors
+}
+
+k8s.miraige.lab:53 {
+    file k8s.zone
+    log
+    errors
+}
+
+admin.miraige.lab:53 {
+    file admin.zone
+    log
+    errors
+}

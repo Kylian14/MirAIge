@@ -1,0 +1,28 @@
+# Bundled Caddy reverse-proxy — automatic HTTPS, also works on localhost.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+#     -f deploy/proxy/caddy.yml up -d
+#
+# Set MIRAIGE_DOMAIN to a public hostname for a real Let's Encrypt certificate;
+# left as "localhost" Caddy serves a local self-signed cert.
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: miraige-caddy
+    restart: unless-stopped
+    depends_on: [api]
+    environment:
+      MIRAIGE_DOMAIN: ${MIRAIGE_DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/proxy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [miraige]
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,22 @@
+Mir[AI]ge {{ .Chart.AppVersion }} deployed as release "{{ .Release.Name }}".
+
+The console (BFF) is the ONLY public surface — every other service stays in-cluster.
+
+{{- if .Values.ingress.enabled }}
+
+  Console: http{{ if .Values.ingress.tls.enabled }}s{{ end }}://{{ .Values.ingress.host }}/
+{{- else }}
+
+  Ingress disabled — reach the console with:
+    kubectl -n {{ .Release.Namespace }} port-forward svc/api {{ .Values.services.api.port }}:{{ .Values.services.api.port }}
+{{- end }}
+
+{{ if eq .Values.secrets.DASHBOARD_PASSWORD "change-me-dashboard-password" -}}
+  ⚠  DASHBOARD_PASSWORD is still the default — override secrets.DASHBOARD_PASSWORD
+     (and A2A_SHARED_SECRET / SECRET_SALT) before exposing this.
+{{- else -}}
+  Log in with the DASHBOARD_PASSWORD you set.
+{{- end }}
+
+NOTE: the images ({{ .Values.image.registry }}/{{ .Values.image.repoPrefix }}<service>:{{ .Values.image.tag }})
+must be published to your registry first — they are not on a public registry yet.

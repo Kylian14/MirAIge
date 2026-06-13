@@ -1,0 +1,48 @@
+title: SQL Injection — common payload signatures
+id: mirage-t0-003
+status: stable
+description: |
+  Detects SQL injection payload patterns in URL path or query string.
+  Caught patterns: UNION SELECT, OR 1=1, sleep(), benchmark(),
+  hex-encoded keywords, comment markers.
+references:
+  - https://owasp.org/www-community/attacks/SQL_Injection
+author: Mir[AI]ge team
+date: 2026/05/28
+logsource:
+  category: webserver
+detection:
+  selection_union:
+    path|contains:
+      - "UNION SELECT"
+      - "UNION ALL SELECT"
+      - "union%20select"
+      - "UNION/**/SELECT"
+  selection_tautology:
+    path|contains:
+      - "' OR '1'='1"
+      - "' OR 1=1"
+      - "\" OR \"1\"=\"1"
+      - "OR 1=1--"
+  selection_time:
+    path|contains:
+      - "sleep("
+      - "SLEEP("
+      - "benchmark("
+      - "BENCHMARK("
+      - "WAITFOR DELAY"
+  selection_comment:
+    path|contains:
+      - "/*"
+      - "--+-"
+      - "%23"
+  condition: selection_union or selection_tautology or selection_time or selection_comment
+fields:
+  - src_ip
+  - path
+falsepositives:
+  - Very rare — legitimate URLs do not contain SQL keywords
+level: critical
+tags:
+  - attack.initial-access
+  - attack.t1190

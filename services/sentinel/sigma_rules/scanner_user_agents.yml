@@ -1,0 +1,52 @@
+title: Known scanner User-Agent strings
+id: mirage-t0-005
+status: stable
+description: |
+  Detects User-Agents from well-known scanners and pentest agents.
+  Matched against the raw log line (the User-Agent is appended after
+  the path in our LogEvent format).
+references:
+  - https://github.com/projectdiscovery/nuclei
+  - https://palisaderesearch.org/blog/llm-honeypot
+author: Mir[AI]ge team
+date: 2026/05/28
+logsource:
+  category: webserver
+detection:
+  selection_classic:
+    raw|contains:
+      - "Nuclei"
+      - "nuclei"
+      - "sqlmap"
+      - "Hydra"
+      - "Nikto"
+      - "ZmEu"
+      - "Wpscan"
+      - "WPScan"
+      - "masscan"
+      - "gobuster"
+      - "dirb"
+      - "ffuf"
+  selection_llm_signature:
+    # SDK signatures observed in LLM-driven recon
+    # GreyNoise reports JA4H `po11nn060000` in 99% of LLM scans
+    raw|contains:
+      - "python-httpx"
+      - "OpenAI/Python"
+      - "ChatGPT-User"
+      - "GPTBot"
+      - "ClaudeBot"
+      - "claude-web"
+      - "OAI-SearchBot"
+  condition: selection_classic or selection_llm_signature
+fields:
+  - src_ip
+  - raw
+falsepositives:
+  - Internal monitoring / health checks running with custom UA
+  - Legitimate API consumers using python-httpx (signal not blocking,
+    contributes to multi-signal score)
+level: medium
+tags:
+  - attack.reconnaissance
+  - attack.t1595

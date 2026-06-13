@@ -1,0 +1,20 @@
+# Bundled nginx reverse-proxy — HTTP on :80 (most widespread proxy).
+# For TLS: mount your cert + key, uncomment the 443 block in nginx.conf and the
+# 443 port below, or terminate TLS upstream (certbot, a cloud LB, etc.).
+#
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+#     -f deploy/proxy/nginx.yml up -d
+
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: miraige-nginx
+    restart: unless-stopped
+    depends_on: [api]
+    ports:
+      - "80:80"
+      # - "443:443"     # uncomment once certs are mounted (see nginx.conf)
+    volumes:
+      - ./deploy/proxy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # - ./deploy/proxy/certs:/etc/nginx/certs:ro
+    networks: [miraige]

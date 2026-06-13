@@ -1,0 +1,22 @@
+#cloud-config
+# Provider-agnostic VM bootstrap for Mir[AI]ge.
+#
+# Paste this as the instance "user data" when creating a VM on ANY cloud that
+# supports cloud-init (AWS, GCP, Azure, OVH, Hetzner, DigitalOcean, Scaleway…).
+# It installs Docker and brings the stack up via the guided installer.
+#
+# Adjust the clone URL if you fork the project; pin a tag instead of the default
+# branch for reproducible deployments.
+package_update: true
+package_upgrade: false
+packages:
+  - git
+  - ca-certificates
+  - curl
+runcmd:
+  - [ sh, -c, "curl -fsSL https://get.docker.com | sh" ]
+  - [ sh, -c, "git clone --depth 1 https://github.com/Kylian14/miraige.git /opt/miraige" ]
+  - [ sh, -c, "cd /opt/miraige && MG_NONINTERACTIVE=1 sh deploy/install.sh" ]
+# For a public hostname with automatic HTTPS, run the production overlay instead
+# of the line above, e.g.:
+#   - [ sh, -c, "cd /opt/miraige && MG_NONINTERACTIVE=1 sh deploy/install.sh && MIRAIGE_DOMAIN=miraige.example.com docker compose -f docker-compose.yml -f docker-compose.prod.yml -f deploy/proxy/caddy.yml up -d" ]

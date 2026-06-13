@@ -1,0 +1,21 @@
+# ──────────────────────────────────────────────────────────────────────
+# Local DEBUG overlay — re-publishes the internal control-plane ports that the
+# base compose keeps network-internal (no host access by default).
+#
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# Handy for poking services directly (curl localhost:8001/health, redis-cli…).
+# You rarely need it: the console (api, :8000) already aggregates everything via
+# /api/v1/*. Do NOT combine with docker-compose.prod.yml.
+# ──────────────────────────────────────────────────────────────────────
+services:
+  redis:
+    ports: ["6379:6379"]
+  sentinel:
+    ports: ["8001:8001"]
+  orchestrator:
+    ports: ["8002:8002"]
+  mcp_server:
+    ports: ["8003:8003"]
+  mirage_metrics:
+    ports: ["8004:8004"]

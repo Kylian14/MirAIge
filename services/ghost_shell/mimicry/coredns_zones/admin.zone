@@ -1,0 +1,12 @@
+$ORIGIN admin.miraige.lab.
+$TTL 1800
+@       IN SOA  ns1.admin.miraige.lab. root.admin.miraige.lab. (
+                2025111903  ; serial
+                10800       ; refresh
+                1800        ; retry
+                1814400     ; expire
+                1800 )      ; minimum
+@       IN NS   ns1.admin.miraige.lab.
+ns1     IN A    10.42.0.14
+@       IN A    10.42.0.14
+panel   IN A    10.42.0.14

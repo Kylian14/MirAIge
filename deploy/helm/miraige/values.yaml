@@ -1,0 +1,82 @@
+# ── images ────────────────────────────────────────────────────────────
+# Built from services/<name>/Dockerfile and published as
+# <registry>/<repoPrefix><name>:<tag> (e.g. ghcr.io/kylian14/miraige-sentinel:0.1.0).
+# They are NOT on a public registry yet — publish them, then point image.registry
+# at wherever you pushed.
+image:
+  registry: ghcr.io/kylian14
+  repoPrefix: "miraige-"
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+# ── shared, non-secret env (mirrors .env CORE + in-cluster service URLs) ──
+# Underscored compose names become hyphenated k8s Service names, so the URLs
+# differ from docker-compose (mcp-server, mirage-metrics, ghost-shell, fake-portal-prod).
+config:
+  SENTINEL_STUB: "1"
+  REROUTE_BACKEND: "mock"
+  RESOURCE_PREFIX: "miraige"
+  ORCHESTRATOR_STATE_BACKEND: "redis"
+  AUTH_BACKEND: "local"
+  HONEYPOT_TTL_SECONDS: "1800"
+  SENTINEL_DETECTION_THRESHOLD: "0.75"
+  ATTACK_VELOCITY_RPS_THRESHOLD: "20"
+  SENTINEL_URL: "http://sentinel:8001"
+  ORCHESTRATOR_URL: "http://orchestrator:8002"
+  MCP_SERVER_URL: "http://mcp-server:8003"
+  MIRAGE_METRICS_URL: "http://mirage-metrics:8004"
+  GHOST_SHELL_URL: "http://ghost-shell:8080"
+  ATTACK_TARGET: "http://fake-portal-prod:8080"
+  REDIS_URL: "redis://redis:6379/0"
+
+# ── secrets · OVERRIDE for any real deploy (--set or a sealed secret) ──
+secrets:
+  DASHBOARD_PASSWORD: "change-me-dashboard-password"
+  A2A_SHARED_SECRET: "change-me-in-production-please"
+  SECRET_SALT: "change-me-ghost-shell"
+  MG_RESET_SECRET: "change-me-reset"
+
+redis:
+  enabled: true
+  image: "redis:7-alpine"
+
+# ── application services. Only `api` is public (via the Ingress). ─────
+services:
+  sentinel:
+    port: 8001
+  orchestrator:
+    port: 8002
+  mcp_server:
+    port: 8003
+  mirage_metrics:
+    port: 8004
+  ghost_shell:
+    port: 8080
+    env:
+      GHOST_SHELL_TTL_SECONDS: "1800"
+  fake_portal_prod:
+    port: 8080
+    env:
+      HONEYPOT_MODE: "0"
+      INSTANCE_NAME: "miraige-portal-prod"
+  api:
+    port: 8000
+    public: true
+
+# ── the only public surface: the console / API ────────────────────────
+ingress:
+  enabled: true
+  className: "nginx"
+  host: "miraige.local"
+  annotations: {}
+  tls:
+    enabled: false
+    secretName: ""
+
+resources:
+  requests:
+    cpu: "50m"
+    memory: "128Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"

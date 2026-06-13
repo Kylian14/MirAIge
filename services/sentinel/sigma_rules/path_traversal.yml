@@ -1,0 +1,39 @@
+title: Path Traversal Attempt
+id: mirage-t0-002
+status: stable
+description: |
+  Detects path traversal payloads in URL path or query.
+  Severity HIGH — these are unambiguous attack signatures.
+references:
+  - https://owasp.org/www-community/attacks/Path_Traversal
+author: Mir[AI]ge team
+date: 2026/05/28
+logsource:
+  category: webserver
+detection:
+  selection_dotdot:
+    path|contains:
+      - "../"
+      - "..\\"
+      - "%2e%2e"
+      - "%2e%2e%2f"
+      - "..%2f"
+      - "%252e%252e"
+  selection_target:
+    path|contains:
+      - "/etc/passwd"
+      - "/etc/shadow"
+      - "/proc/self/environ"
+      - "/.bash_history"
+      - "/windows/win.ini"
+      - "/boot.ini"
+  condition: selection_dotdot or selection_target
+fields:
+  - src_ip
+  - path
+falsepositives:
+  - Very rare — legitimate paths almost never contain these patterns
+level: high
+tags:
+  - attack.initial-access
+  - attack.t1190

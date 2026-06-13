@@ -1,0 +1,41 @@
+title: Web Reconnaissance — Top-N OWASP endpoint probing
+id: mirage-t0-001
+status: stable
+description: |
+  Detects classic web reconnaissance patterns : enumeration of
+  configuration, secret, and management endpoints typical of
+  Nuclei / sqlmap / pentest tooling.
+  Used as a Tier 0 catch-all in the Mir[AI]ge Sentinel cascade.
+references:
+  - https://owasp.org/www-project-web-security-testing-guide/
+author: Mir[AI]ge team
+date: 2026/05/28
+logsource:
+  category: webserver
+detection:
+  selection_paths:
+    path|contains:
+      - "/.env"
+      - "/.git/config"
+      - "/.aws/credentials"
+      - "/.kube/config"
+      - "/.ssh/id_rsa"
+      - "/swagger"
+      - "/openapi.json"
+      - "/api-docs"
+      - "/.well-known/security.txt"
+      - "/server-status"
+      - "/server-info"
+      - "/phpinfo"
+  condition: selection_paths
+fields:
+  - src_ip
+  - path
+  - user_agent
+falsepositives:
+  - Vulnerability scanners run with consent
+  - Search engine crawlers indexing /robots.txt
+level: medium
+tags:
+  - attack.reconnaissance
+  - attack.t1595.002

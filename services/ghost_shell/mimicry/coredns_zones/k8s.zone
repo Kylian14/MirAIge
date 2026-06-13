@@ -1,0 +1,12 @@
+$ORIGIN k8s.miraige.lab.
+$TTL 300
+@       IN SOA  ns-a.k8s.miraige.lab. ops.k8s.miraige.lab. (
+                2026060100  ; serial
+                3600        ; refresh
+                900         ; retry
+                604800      ; expire
+                300 )       ; minimum
+@       IN NS   ns-a.k8s.miraige.lab.
+ns-a    IN A    10.42.0.13
+@       IN A    10.42.0.13
+api     IN A    10.42.0.13

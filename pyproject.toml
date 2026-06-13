@@ -1,0 +1,29 @@
+[project]
+name = "miraige"
+version = "0.1.0"
+description = "Mir[AI]ge — control CLI for the defensive-deception stack"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+authors = [{ name = "The Mir[AI]ge Authors" }]
+dependencies = []                       # stdlib only — keep it pipx/uv-installable anywhere
+
+[project.scripts]
+miraige = "miraige_cli.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["miraige_cli"]
+
+[tool.ruff]
+target-version = "py311"
+
+[tool.ruff.lint]
+# Rules the codebase opts out of by design: dense one-line conditionals in the
+# attack simulator (E701/E702), short loop variables (E741), one lazy import
+# (E402) and one small lambda (E731). Ruff still enforces the bug-class rules
+# (unused names/imports, undefined names, …).
+ignore = ["E701", "E702", "E731", "E741", "E402"]

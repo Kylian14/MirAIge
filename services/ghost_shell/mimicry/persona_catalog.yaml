@@ -1,0 +1,69 @@
+# ─────────────────────────────────────────────────────────────────────
+# Persona catalog · source de vérité de la cohérence des personas
+# ─────────────────────────────────────────────────────────────────────
+# Chaque persona = un tuple COHÉRENT (OS, kernel, services, banners) ET ses
+# ressources de mimicry P0 : netns dédié, IP, TTL, profil TLS, zone DNS.
+#
+# Consommé par : persona_router.py, tarpit.py, et mimicry/{netns_setup.sh,
+# ttl_mangler.sh, tls_personas.py, coredns_zones/}.
+# Réfs : ADR-018 (P0 netns/TLS/DNS), ADR-014 (mimicry stack), stress-test §2.
+# ─────────────────────────────────────────────────────────────────────
+
+portal_ovh:
+  os: "Ubuntu 22.04.3 LTS"
+  kernel: "5.15.0-91-generic"
+  http_server: "nginx/1.22.1"
+  open_ports: [80, 443, 22]
+  ssh_banner: "SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.6"
+  http_headers:
+    Server: "nginx/1.22.1"
+    X-Powered-By: "PHP/8.1.2"
+  # ─ mimicry P0 ─
+  netns: miraige-ns-portal
+  ip: 10.42.0.11
+  ttl: 64                       # Linux
+  tls_profile: nginx_modern     # cf. tls_personas.py
+  dns_zone: portal.miraige.lab
+
+mysql:
+  os: "Debian 11 (bullseye)"
+  kernel: "5.10.0-26-amd64"
+  banner: "5.7.43-0ubuntu0.18.04.1"
+  open_ports: [3306, 22]
+  ssh_banner: "SSH-2.0-OpenSSH_8.4p1 Debian-5+deb11u3"
+  # ─ mimicry P0 ─
+  netns: miraige-ns-mysql
+  ip: 10.42.0.12
+  ttl: 64
+  tls_profile: none             # MySQL + SSH, pas de HTTPS
+  dns_zone: db.miraige.lab
+
+k8s_apiserver:
+  os: "Container-Optimized OS (cos-101-17162.40.79)"
+  kernel: "6.1.34+"
+  http_server: "kube-apiserver/v1.28.4"
+  open_ports: [443, 6443, 10250]
+  http_headers:
+    Server: ""
+    X-Content-Type-Options: "nosniff"
+  # ─ mimicry P0 ─
+  netns: miraige-ns-k8s
+  ip: 10.42.0.13
+  ttl: 64
+  tls_profile: k8s_go           # TLS 1.3, stack Go => JARM distinct
+  dns_zone: k8s.miraige.lab
+
+admin_panel:
+  os: "Ubuntu 22.04.3 LTS"
+  kernel: "5.15.0-91-generic"
+  http_server: "gunicorn/21.2.0"
+  open_ports: [443, 8080]
+  http_headers:
+    Server: "gunicorn/21.2.0"
+    X-Frame-Options: "DENY"
+  # ─ mimicry P0 ─
+  netns: miraige-ns-admin
+  ip: 10.42.0.14
+  ttl: 64
+  tls_profile: gunicorn_py      # OpenSSL/Python => JA3S distinct de nginx/go
+  dns_zone: admin.miraige.lab

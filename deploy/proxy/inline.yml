@@ -1,0 +1,28 @@
+# Inline enforcement proxy — routes a flagged mg_session / IP to the Ghost Shell
+# by reading the Redis flag set written by REROUTE_BACKEND=redis. Put it in front
+# of the protected app (UPSTREAM_URL) and send traffic through it.
+#
+#   REROUTE_BACKEND=redis docker compose \
+#     -f docker-compose.yml -f deploy/proxy/inline.yml up -d
+#
+# Default host port 8088 -> proxy :8080 -> upstream (or Ghost Shell if flagged).
+
+services:
+  miraige-proxy:
+    build:
+      context: .
+      dockerfile: deploy/proxy/inline/Dockerfile
+    container_name: miraige-proxy
+    environment:
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      RESOURCE_PREFIX: ${RESOURCE_PREFIX:-miraige}
+      UPSTREAM_URL: ${UPSTREAM_URL:-http://fake_portal_prod:8080}
+      GHOST_SHELL_URL: ${GHOST_SHELL_URL:-http://ghost_shell:8080}
+      SENTINEL_URL: ${SENTINEL_URL:-http://sentinel:8001}
+    ports:
+      - "${PROXY_HOST_PORT:-8088}:8080"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks: [miraige]

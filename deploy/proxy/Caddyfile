@@ -1,0 +1,19 @@
+# Reverse-proxy in front of the Mir[AI]ge dashboard.
+# MIRAIGE_DOMAIN=localhost  -> local self-signed HTTPS.
+# MIRAIGE_DOMAIN=your.host  -> automatic Let's Encrypt certificate (needs public 80/443 + DNS).
+{$MIRAIGE_DOMAIN:localhost} {
+	# Browser security headers for the operator console (Caddy terminates TLS,
+	# so HSTS is included). `header` applies to every response on this site.
+	header {
+		X-Frame-Options "DENY"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'"
+	}
+
+	# Trust boundary: Caddy is the edge. reverse_proxy sets X-Forwarded-For /
+	# X-Forwarded-Proto from the real client connection by default and does NOT
+	# trust an inbound XFF, so the upstream sees the true client.
+	reverse_proxy api:8000
+}

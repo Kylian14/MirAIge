@@ -1,0 +1,17 @@
+# Dépendances de développement / tests (Phase 3 — filet de sécurité).
+# Les tests tournent hors Docker : les imports lourds optionnels (xgboost,
+# codecarbon, openstacksdk) sont volontairement absents — les services ont des
+# fallbacks lazy que les tests de caractérisation figent explicitement.
+fastapi>=0.110
+uvicorn[standard]>=0.27
+httpx>=0.27
+pydantic>=2.6
+python-multipart>=0.0.9
+pyyaml>=6.0
+redis>=5.0
+jinja2>=3.0
+numpy>=1.26
+tiktoken>=0.7
+
+pytest>=8.0
+pytest-asyncio>=0.23

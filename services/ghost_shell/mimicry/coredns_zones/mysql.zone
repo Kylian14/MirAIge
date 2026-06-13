@@ -1,0 +1,12 @@
+$ORIGIN db.miraige.lab.
+$TTL 86400
+@       IN SOA  ns1.db.miraige.lab. dnsadmin.db.miraige.lab. (
+                2026051207  ; serial
+                28800       ; refresh
+                7200        ; retry
+                2419200     ; expire
+                86400 )     ; minimum
+@       IN NS   ns1.db.miraige.lab.
+ns1     IN A    10.42.0.12
+@       IN A    10.42.0.12
+mysql   IN A    10.42.0.12

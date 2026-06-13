@@ -1,0 +1,5 @@
+fastapi>=0.110
+uvicorn[standard]>=0.27
+httpx>=0.27
+pydantic>=2.6
+redis>=5.0          # ORCHESTRATOR_STATE_BACKEND=redis (shared, crash-safe engagement state)

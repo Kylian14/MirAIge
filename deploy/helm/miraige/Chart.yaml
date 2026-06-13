@@ -1,0 +1,17 @@
+apiVersion: v2
+name: miraige
+description: >-
+  Mir[AI]ge — agentic deception / moving-target defense. Detection cascade
+  (Sigma → heuristics → optional LLM), an orchestrator that reroutes attackers
+  to a procedural Ghost Shell, and a single authenticated console (the BFF).
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - security
+  - deception
+  - honeypot
+  - moving-target-defense
+home: https://github.com/Kylian14/miraige
+sources:
+  - https://github.com/Kylian14/miraige

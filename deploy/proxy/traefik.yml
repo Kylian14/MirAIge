@@ -1,0 +1,54 @@
+# Bundled Traefik reverse-proxy — automatic HTTPS via Let's Encrypt (TLS-ALPN).
+# Needs a PUBLIC domain with 80/443 reachable from the internet.
+# For localhost / no public domain, use caddy.yml instead.
+#
+#   MIRAIGE_DOMAIN=your.host MIRAIGE_ACME_EMAIL=you@host \
+#     docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+#       -f deploy/proxy/traefik.yml up -d
+
+services:
+  traefik:
+    image: traefik:v3.1
+    container_name: miraige-traefik
+    restart: unless-stopped
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.le.acme.email=${MIRAIGE_ACME_EMAIL:-admin@example.com}
+      - --certificatesresolvers.le.acme.storage=/acme/acme.json
+      - --certificatesresolvers.le.acme.tlschallenge=true
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_acme:/acme
+    networks: [miraige]
+
+  # Labels merge onto the base api service (Traefik reads them via the docker provider).
+  api:
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.miraige.rule=Host(`${MIRAIGE_DOMAIN:-localhost}`)
+      - traefik.http.routers.miraige.entrypoints=websecure
+      - traefik.http.routers.miraige.tls.certresolver=le
+      - traefik.http.services.miraige.loadbalancer.server.port=8000
+      # Browser security headers for the operator console. Traefik terminates TLS
+      # on websecure, so HSTS (stsSeconds) is safe to send here.
+      - traefik.http.routers.miraige.middlewares=miraige-sec@docker
+      - traefik.http.middlewares.miraige-sec.headers.frameDeny=true
+      - traefik.http.middlewares.miraige-sec.headers.contentTypeNosniff=true
+      - traefik.http.middlewares.miraige-sec.headers.referrerPolicy=no-referrer
+      - traefik.http.middlewares.miraige-sec.headers.stsSeconds=31536000
+      - traefik.http.middlewares.miraige-sec.headers.stsIncludeSubdomains=true
+      - traefik.http.middlewares.miraige-sec.headers.contentSecurityPolicy=default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'
+      # Trust boundary: Traefik is the edge. It overwrites X-Forwarded-* from the
+      # real connection by default; do NOT add forwardedHeaders.trustedIPs / insecure
+      # (that would make it trust a client-supplied XFF).
+
+volumes:
+  traefik_acme:

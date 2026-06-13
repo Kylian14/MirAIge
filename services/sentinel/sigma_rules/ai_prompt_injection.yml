@@ -1,0 +1,64 @@
+title: AI Agent Prompt Injection Signature in HTTP Request
+id: mirage-t0-006
+status: stable
+description: |
+  Detects prompt injection payloads embedded by LLM-driven agents in their
+  own HTTP requests. An AI agent that has been instructed to exfiltrate or
+  enumerate a target may include jailbreak / override phrases in URL paths,
+  query strings, or User-Agent headers as it follows adversarial prompts.
+
+  This is a near-perfect discriminator: humans do not send
+  "ignore previous instructions" in a GET path.
+
+  Reference: Palisade Research arXiv:2410.13919 — "LLM agents comply with
+  reverse prompt injection in >50% of cases; humans never do."
+references:
+  - https://arxiv.org/abs/2410.13919
+  - https://palisaderesearch.org/blog/llm-honeypot
+author: Mir[AI]ge team · Dev B
+date: 2026/06/01
+logsource:
+  category: webserver
+detection:
+  selection_override:
+    path|contains:
+      - "ignore previous"
+      - "ignore all previous"
+      - "disregard previous"
+      - "forget previous instructions"
+      - "new instructions"
+      - "you are now"
+      - "act as"
+      - "system prompt"
+      - "[[SYSTEM]]"
+      - "<|system|>"
+  selection_jailbreak:
+    path|contains:
+      - "DAN mode"
+      - "developer mode"
+      - "jailbreak"
+      - "do anything now"
+      - "JAILBREAK"
+  selection_raw_override:
+    raw|contains:
+      - "ignore previous instructions"
+      - "ignore all previous"
+      - "Ignore previous instructions"
+      - "disregard your instructions"
+      - "you are now a"
+      - "act as if you"
+      - "IMPORTANT: Before any further action"
+  condition: selection_override or selection_jailbreak or selection_raw_override
+fields:
+  - src_ip
+  - path
+  - raw
+falsepositives:
+  - Security researchers testing their own systems
+  - Intentional red-team exercises
+level: critical
+tags:
+  - attack.reconnaissance
+  - attack.t1595
+  - detection.ai-agent
+  - mirage.ai-recon

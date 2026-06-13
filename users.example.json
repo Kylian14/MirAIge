@@ -1,0 +1,19 @@
+{
+  "_comment": [
+    "RBAC user store for the BFF (services/api). Copy to users.json, then point the",
+    "api at it: set MIRAIGE_USERS_FILE=/app/users.json and mount it into the container",
+    "(see docker-compose.yml). Roles: viewer < operator < admin.",
+    "  · viewer    — read-only console",
+    "  · operator  — viewer + launch/stop attacks, reset demo state",
+    "  · admin     — operator + (future) user management",
+    "Prefer password_hash over plaintext. Generate one with:",
+    "  python -m services.api.auth hash 'the-password'",
+    "With no users file at all, the api synthesizes a single 'admin' from",
+    "DASHBOARD_PASSWORD (zero-config, same reach as the old single-password console)."
+  ],
+  "users": [
+    { "username": "admin",    "role": "admin",    "password_hash": "pbkdf2_sha256$200000$REPLACE_WITH_A_REAL_SALT$REPLACE_WITH_A_REAL_HASH" },
+    { "username": "operator", "role": "operator", "password": "change-me-operator" },
+    { "username": "analyst",  "role": "viewer",   "password": "change-me-viewer" }
+  ]
+}

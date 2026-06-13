@@ -221,3 +221,10 @@ def test_admin_reset_mock_mode(client):
     assert r["service"] == "mcp" and r["reset"] is True
     # mock mode: no real L7 policy to purge
     assert r["purged"] == 0 and r["real_ovh"] is False
+
+
+def test_non_dict_envelope_returns_minus_32600(client):
+    r = client.post("/mcp", json=[1, 2, 3]).json()
+    assert r["error"]["code"] == -32600
+    assert "invalid request" in r["error"]["message"]
+

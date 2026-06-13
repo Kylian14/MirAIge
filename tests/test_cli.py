@@ -75,3 +75,34 @@ def test_reset_logs_in_then_posts(monkeypatch, capsys):
     assert calls[0] == ("POST", "/api/v1/login", None, {"password": "pw"})
     assert calls[1][:3] == ("POST", "/api/v1/admin/reset", "T0K")
     assert "reset" in capsys.readouterr().out
+
+
+def test_logs_invokes_compose_logs(monkeypatch):
+    seen = {}
+    monkeypatch.setattr(cli, "_compose", lambda *a: seen.update(args=a) or 0)
+    
+    # logs with no service
+    assert cli.main(["logs"]) == 0
+    assert seen["args"] == ("logs", "-f")
+    
+    # logs with a service
+    assert cli.main(["logs", "sentinel"]) == 0
+    assert seen["args"] == ("logs", "-f", "sentinel")
+
+
+def test_reset_api_unreachable(monkeypatch, capsys):
+    def fake_http(method, path, token=None, body=None):
+        import urllib.error
+        raise urllib.error.URLError("connection refused")
+
+    monkeypatch.setattr(cli, "_http", fake_http)
+    assert cli.main(["reset", "--password", "pw"]) == 1
+    assert "error: API unreachable" in capsys.readouterr().err
+
+
+def test_reset_login_failed(monkeypatch, capsys):
+    # API reachable but token missing in response
+    monkeypatch.setattr(cli, "_http", lambda m, p, **k: {})
+    assert cli.main(["reset", "--password", "pw"]) == 1
+    assert "error: login failed" in capsys.readouterr().err
+

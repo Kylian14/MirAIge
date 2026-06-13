@@ -116,3 +116,40 @@ def test_make_store_selects_backend(monkeypatch):
     assert isinstance(make_morph_store({}), InMemoryMorphStore)
     monkeypatch.setenv("ORCHESTRATOR_STATE_BACKEND", "redis")
     assert isinstance(make_morph_store({}), RedisMorphStore)
+
+
+async def test_redis_evict_terminal_with_stale_order_entry():
+    fake_redis = _FakeRedis()
+    s = RedisMorphStore(redis_client=fake_redis, key_prefix="t:orch")
+
+    # Manually append a stale entry to the order list first (not present in the hash map)
+    await fake_redis.rpush("t:orch:order", "stale")
+
+    # Add a real entry (appended second in order list)
+    await s.add(_ctx("real", MorphState.IDLE))
+
+    # Let's evict with max_active = 0
+    await s.evict_terminal(0)
+
+    # Both "stale" (removed because hget was None) and "real" (removed because IDLE is terminal)
+    # should be completely cleared from the order list.
+    assert await fake_redis.lrange("t:orch:order", 0, -1) == []
+
+
+def test_redis_lazy_client_init(monkeypatch):
+    called = []
+
+    def mock_from_url(url, **kwargs):
+        called.append((url, kwargs))
+        return "mocked-redis-client"
+
+    import redis.asyncio as aioredis
+    monkeypatch.setattr(aioredis, "from_url", mock_from_url)
+
+    s = RedisMorphStore(redis_url="redis://my-custom-url:1234/5")
+    assert s._redis is None
+
+    client = s._r()
+    assert client == "mocked-redis-client"
+    assert called == [("redis://my-custom-url:1234/5", {"decode_responses": True})]
+

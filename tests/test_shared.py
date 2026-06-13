@@ -268,3 +268,12 @@ def test_detectionverdict_autogenerates_request_id():
     )
     assert v.request_id
     assert v.tier_trace == []
+
+
+def test_verify_rejects_non_numeric_timestamp():
+    body = b"payload"
+    headers = sign_request(body, secret=SECRET)
+    headers["X-Mirage-Timestamp"] = "not-a-number"
+    with pytest.raises(A2AVerificationError, match="timestamp not numeric"):
+        verify_request(body, headers, secret=SECRET)
+

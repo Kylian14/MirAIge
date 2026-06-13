@@ -1,0 +1,116 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+jobs:
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install ruff
+        run: pip install ruff
+      - name: Lint services
+        run: ruff check services/
+
+  tests:
+    name: Test suite (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dev dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Run characterization test suite (offline, no cloud)
+        run: python -m pytest -q
+
+  stack-smoke:
+    name: Stack smoke test (offline, no cloud)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build & start the stack
+        run: |
+          cp .env.example .env
+          docker compose up --build -d
+
+      - name: Wait for services to become healthy
+        run: |
+          set -e
+          # The control-plane ports (8001-8004) are network-internal and closed on
+          # the host. We only probe the PUBLIC surfaces:
+          #   - console API :8000/api/v1/health — aggregates every agent's health;
+          #     its JSON 'backends' map must report every backend as "ok".
+          #   - decoy (ghost_shell) :8080/
+          #   - portal (fake_portal_prod) :8090/
+          for i in $(seq 1 30); do
+            ok=1
+            body="$(curl -sf http://localhost:8000/api/v1/health || true)"
+            if [ -z "$body" ]; then
+              ok=0
+            else
+              # fail the gate if any backend is not "ok"
+              echo "$body" | python3 -c 'import json,sys; d=json.load(sys.stdin); sys.exit(0 if d.get("backends") and all(v=="ok" for v in d["backends"].values()) else 1)' || ok=0
+            fi
+            curl -sf "http://localhost:8080/" >/dev/null || ok=0
+            curl -sf "http://localhost:8090/" >/dev/null || ok=0
+            if [ "$ok" = "1" ]; then echo "all services healthy"; break; fi
+            echo "waiting ($i)…"; sleep 5
+          done
+          echo "final console health:"
+          curl -sf http://localhost:8000/api/v1/health
+
+      - name: Run an end-to-end attack (offline stub mode)
+        run: |
+          python3 -m services.attack_simulator.attack \
+            --target http://localhost:8080 --level naive-full --duration 20
+
+      - name: Dump logs on failure
+        if: failure()
+        run: docker compose logs --tail=200
+
+  publish:
+    name: Publish images to GHCR
+    runs-on: ubuntu-latest
+    # Only on version tags (e.g. v1.2.3) — never on branch pushes / PRs.
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        service:
+          - api
+          - sentinel
+          - orchestrator
+          - mcp_server
+          - ghost_shell
+          - mirage_metrics
+          - fake_portal
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push ${{ matrix.service }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: services/${{ matrix.service }}/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/miraige-${{ matrix.service }}:${{ github.ref_name }}

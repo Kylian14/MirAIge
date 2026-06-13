@@ -1,0 +1,36 @@
+# Contexte de build minimal — les Dockerfiles ne COPYent que requirements + le service +
+# services/shared. Tout le reste alourdit inutilement le contexte (était ~470 Mo).
+.venv/
+venv/
+env/
+.git/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+
+# Node / frontend (rebuilt in the api image's web stage)
+node_modules/
+web/dist/
+
+# Docs / recherche / livrables (jamais nécessaires au runtime)
+docs/
+Papers/
+Design/
+presentation/
+ressources-lundi.html
+*.pdf
+
+# Diagrammes générés
+*.png
+*.svg
+
+# Secrets / infra locale
+.env
+clouds.yaml
+*.pem
+*.key
+.claude/
+
+# Artefacts de copie
+* 2.*

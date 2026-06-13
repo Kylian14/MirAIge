@@ -1,0 +1,97 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node / frontend
+node_modules/
+web/dist/
+web/.vite/
+*.tsbuildinfo
+
+# Env
+.env
+.env.local
+*.local.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Docker
+docker-compose.override.yml
+
+# Build artifacts
+dist/
+build/
+*.log
+
+# Generated knowledge graph (regenerate with `graphify update .`)
+graphify-out/
+
+# Local data
+data/
+*.db
+*.sqlite
+
+# Secrets that should never be committed
+ovh-credentials.json
+clouds.yaml
+secure.yaml
+*openrc*.sh
+*.pem
+*.key
+.claude
+.antigravitycli
+
+# ─────────────────────────────────────────────────────────────
+# Internal docs (research, planning, hackathon deliverables) stay private;
+# only the public handbook under docs/guide/ is tracked.
+# ─────────────────────────────────────────────────────────────
+docs/*
+!docs/guide/
+
+# private pre-publication review notes (not for the public repo)
+suggestions.md
+MIR[AI]GE Design System/
+ressources-lundi.html
+Papers
+scripts
+*.pdf
+*.tar.gz
+*.gz
+/tmp/
+Design
+
+# Diagrammes générés (les SVG sources non commitées)
+*.png
+*.svg
+
+# Backups & fichiers temporaires
+*.bak
+*.tmp
+*.orig
+*~
+
+# Artefacts de copie macOS / Google Drive (suffixe " 2.*")
+* 2.*
+
+# Dumps de leurre volumineux NON servis par le code (poids mort ~126 Mo) — régénérables
+# hors-ligne ; seuls les db_users_export*.csv sont réellement servis (tarpit). Cf. whitepaper J3.
+services/ghost_shell/library/**/db_transactions_*.json
+
+.venv-dev/
+
+# RBAC user store (real one; commit users.example.json instead)
+users.json

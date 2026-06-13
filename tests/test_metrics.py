@@ -179,3 +179,30 @@ async def test_spawn_tracks_then_discards_task():
     await asyncio.sleep(0)
     assert ran == [True]
     assert len(mm._BG_TASKS) == 0
+
+
+def test_ws_stream_sends_initial_snapshot_and_broadcasts(client):
+    # Ensure any background tasks from previous tests are cleared before testing websocket list
+    mm.CONNECTED_WEBSOCKETS.clear()
+    
+    with client.websocket_connect("/ws") as websocket:
+        # 1. We should receive the initial snapshot immediately
+        data = websocket.receive_json()
+        assert data["tokens_served_attacker"] == 0
+        assert data["active_sessions"] == 0
+
+        # 2. mm.CONNECTED_WEBSOCKETS should track the connection
+        assert len(mm.CONNECTED_WEBSOCKETS) == 1
+
+        # 3. Post a new token event to trigger a broadcast
+        r = client.post("/events/tokens", json={"session_id": "s1", "text": FIXED_TEXT})
+        assert r.status_code == 200
+
+        # 4. We should receive the updated snapshot broadcasted on the websocket
+        data2 = websocket.receive_json()
+        assert data2["tokens_served_attacker"] == FIXED_TOKENS
+        assert data2["active_sessions"] == 1
+
+    # 5. After exiting context manager, the connection should be cleaned up
+    assert len(mm.CONNECTED_WEBSOCKETS) == 0
+

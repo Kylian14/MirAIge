@@ -50,19 +50,12 @@ jobs:
       - name: Wait for services to become healthy
         run: |
           set -e
-          # The control-plane ports (8001-8004) are network-internal and closed on
-          # the host. We only probe the PUBLIC surfaces:
-          #   - console API :8000/api/v1/health — aggregates every agent's health;
-          #     its JSON 'backends' map must report every backend as "ok".
-          #   - decoy (ghost_shell) :8080/
-          #   - portal (fake_portal_prod) :8090/
           for i in $(seq 1 30); do
             ok=1
             body="$(curl -sf http://localhost:8000/api/v1/health || true)"
             if [ -z "$body" ]; then
               ok=0
             else
-              # fail the gate if any backend is not "ok"
               echo "$body" | python3 -c 'import json,sys; d=json.load(sys.stdin); sys.exit(0 if d.get("backends") and all(v=="ok" for v in d["backends"].values()) else 1)' || ok=0
             fi
             curl -sf "http://localhost:8080/" >/dev/null || ok=0
@@ -86,7 +79,6 @@ jobs:
   publish:
     name: Publish images to GHCR
     runs-on: ubuntu-latest
-    # Only on version tags (e.g. v1.2.3) — never on branch pushes / PRs.
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
       contents: read
@@ -104,6 +96,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Lowercase the image namespace (GHCR requires it)
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
+
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -117,4 +112,4 @@ jobs:
           context: .
           file: services/${{ matrix.service }}/Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/miraige-${{ matrix.service }}:${{ github.ref_name }}
+          tags: ghcr.io/${{ env.OWNER_LC }}/miraige-${{ matrix.service }}:${{ github.ref_name }}

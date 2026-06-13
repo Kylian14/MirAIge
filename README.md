@@ -36,7 +36,7 @@ the loop.
 > starts the whole stack with heuristic detection and a mocked load-balancer reroute.
 > The cloud parts (LLM tier and real reroute) are opt-in.
 
-**📖 Full reference:** the [handbook](docs/guide/) covers
+**Full reference:** the [handbook](docs/guide/) covers
 [architecture](docs/guide/architecture.md),
 [configuration](docs/guide/configuration.md) and the
 [API](docs/guide/api.md).
@@ -61,7 +61,7 @@ Then open:
 | http://localhost:8080 | The Ghost Shell decoy (inspect the 14 mechanisms directly) |
 
 The control-plane services (sentinel, orchestrator, …) are network-internal by
-default — the console aggregates all of their data under `/api/v1`. To reach them
+default. The console aggregates all of their data under `/api/v1`. To reach them
 directly while debugging, add `-f docker-compose.dev.yml`.
 
 Launch an attack and watch the asymmetry build up:
@@ -76,15 +76,15 @@ python3 -m services.attack_simulator.attack \
 ## Install on your own server
 
 `docker compose up --build` works on any Docker host. For a real deployment, use the guided
-installer — it checks Docker, generates strong secrets into `.env`, turns on
+installer. It checks Docker, generates strong secrets into `.env`, turns on
 `MG_STRICT_SECRETS=1`, and starts the stack:
 
 ```bash
 sh deploy/install.sh
 ```
 
-Harden it with the production overlay — internal services are no longer published, the
-the console is bound to loopback, `MG_STRICT_SECRETS=1`, restart policies on:
+Harden it with the production overlay. Internal services are no longer published, the
+console is bound to loopback, `MG_STRICT_SECRETS=1`, restart policies on:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
@@ -92,7 +92,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 Then put a reverse proxy in front for TLS. Either point your **existing** nginx / Traefik /
 Caddy / HAProxy at `127.0.0.1:8000` (drop-in configs in
-[`deploy/proxy/snippets/`](deploy/proxy/snippets/)), or add **one bundled** proxy overlay:
+[`deploy/proxy/snippets/`](deploy/proxy/snippets/)), or add one bundled proxy overlay:
 
 ```bash
 BASE="-f docker-compose.yml -f docker-compose.prod.yml"
@@ -106,7 +106,7 @@ To bootstrap a fresh VM on any cloud (AWS, GCP, Azure, OVH, Hetzner…), paste
 [`deploy/cloud-init.example.yaml`](deploy/cloud-init.example.yaml) as the instance's
 user-data.
 
-For Kubernetes, a Helm chart lives in [`deploy/helm/miraige`](deploy/helm/miraige) — the
+For Kubernetes, a Helm chart lives in [`deploy/helm/miraige`](deploy/helm/miraige). The
 console is the only service exposed (via an Ingress), everything else stays in-cluster:
 
 ```bash
@@ -143,8 +143,8 @@ attacker ──▶ fake_portal_prod ──logs──▶ sentinel ──A2A──
 
 **Network model.** By default only the user-facing surfaces are published to the
 host: the console/API (`:8000`), the protected portal (`:8090`), and the decoy
-(`:8080`). The control-plane — `sentinel`, `orchestrator`, `mcp_server`,
-`mirage_metrics`, `redis` — is network-internal (the console aggregates all of it
+(`:8080`). The control-plane (`sentinel`, `orchestrator`, `mcp_server`,
+`mirage_metrics`, `redis`) is network-internal (the console aggregates all of it
 under `/api/v1`, so you never need to hit those ports directly). Re-open them for
 debugging with `-f docker-compose.dev.yml`; lock everything except the API down
 to loopback (for a reverse proxy) with `-f docker-compose.prod.yml`.
@@ -183,10 +183,10 @@ flags the offending `mg_session` / IP in Redis, and a small OpenResty proxy in f
 app ([`deploy/proxy/inline/`](deploy/proxy/inline/)) routes flagged traffic to the Ghost
 Shell while everything else passes through. It fails open (never breaks your app if Redis is
 down) and runs anywhere Docker does. The proxy also mirrors each request to Sentinel, so
-detection works in front of your own app — set `SENTINEL_URL=` (empty) to disable it if your
-app already streams its logs. It also serves always-on decoy traps in front of your app —
+detection works in front of your own app. Set `SENTINEL_URL=` (empty) to disable it if your
+app already streams its logs. It also serves always-on decoy traps in front of your app:
 bait paths and a reverse prompt-injection canary
-([`deploy/proxy/inline/canary_manifest.json`](deploy/proxy/inline/canary_manifest.json)) — so
+([`deploy/proxy/inline/canary_manifest.json`](deploy/proxy/inline/canary_manifest.json)), so
 an AI scanner trips a high-confidence signal before it even reaches you.
 
 ```bash
@@ -201,7 +201,7 @@ To drive a real Octavia load balancer instead of the mock, set `REROUTE_BACKEND=
 in the `OVH_*` / `OS_*` credentials plus `LB_ID` and `GHOST_POOL_ID` in `.env`. The Octavia adapter
 ([`services/mcp_server/backends/octavia.py`](services/mcp_server/backends/octavia.py)) is the only
 OVH-specific code and nothing else depends on it. Provisioning the load balancer and the hosts is
-your infrastructure's concern — any OpenStack works, and other reroute backends are on the roadmap.
+your infrastructure's concern. Any OpenStack works, and other reroute backends are on the roadmap.
 
 ---
 
@@ -221,7 +221,7 @@ project runs anywhere:
 - **The cloud is opt-in.** The Octavia reroute sits behind a single boundary
   ([`services/mcp_server/backends/octavia.py`](services/mcp_server/backends/octavia.py)) and is mocked
   in-process unless you set `REROUTE_BACKEND=octavia`. Nothing else in the stack imports it, so
-  Octavia is the *reference* backend rather than a hard dependency — it is also the
+  Octavia is the *reference* backend rather than a hard dependency. It is also the
   boundary other load balancers (nginx, Traefik, Envoy, a managed cloud LB) plug into.
 - **Bring your own LLM.** The detection LLM speaks the OpenAI-compatible Chat Completions
   API, so OVH AI Endpoints, OpenAI, Together, Groq, a local vLLM or Ollama all work with a
@@ -276,7 +276,7 @@ miraige/
 
 ## Access control (roles)
 
-The console is role-based — **viewer < operator < admin**:
+The console is role-based, **viewer < operator < admin**:
 
 | Role | Can |
 |------|-----|
@@ -285,7 +285,7 @@ The console is role-based — **viewer < operator < admin**:
 | `admin` | + (reserved) user management |
 
 Out of the box there is nothing to manage: the BFF synthesizes a single `admin`
-from `DASHBOARD_PASSWORD`, so the old single-password login keeps working — and
+from `DASHBOARD_PASSWORD`, so the old single-password login keeps working, and
 is no more permissive than before. For real multi-user RBAC, drop a `users.json`
 (see [users.example.json](users.example.json)), mount it, and point
 `MIRAIGE_USERS_FILE` at it:
@@ -295,11 +295,11 @@ python -m services.api.auth hash 'the-password'   # -> pbkdf2_sha256$... for use
 ```
 
 Once `MIRAIGE_USERS_FILE` is set, an admin adds/removes users, changes roles and
-resets passwords from the console's **Users** page — no hand-editing required.
+resets passwords from the console's **Users** page, with no hand-editing required.
 
 `AUTH_BACKEND=local` (default) uses that store. `AUTH_BACKEND=oidc` is a reserved
 seam for delegating to an identity provider (validate its JWT, map a group to a
-role) — not implemented yet, and selecting it currently denies all requests.
+role). It is not implemented yet, and selecting it currently denies all requests.
 
 ## Security & responsible use
 

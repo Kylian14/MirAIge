@@ -2,7 +2,7 @@
 
 Mir[AI]ge is configured entirely through environment variables. Copy
 [`.env.example`](../../.env.example) to `.env` (git-ignored) and override what you
-need — the file is the canonical, commented source and the stack runs
+need. The file is the canonical, commented source and the stack runs
 out-of-the-box with zero credentials.
 
 > **Before any public deploy**, set `DASHBOARD_PASSWORD`, `A2A_SHARED_SECRET` and
@@ -16,7 +16,7 @@ out-of-the-box with zero credentials.
 |----------|---------|---------|
 | `SENTINEL_STUB` | `1` | `1` = offline heuristic detection (no LLM). Set `0` to enable the T2 LLM tier (requires the `AI_ENDPOINTS_*` block below). |
 | `REROUTE_BACKEND` | `mock` | How a reroute is enforced: `mock` (in-process), `octavia` (real OpenStack/Octavia LB), or `redis` (cloud-free flag set read by the inline proxy). |
-| `RESOURCE_PREFIX` | `miraige` | Prefix for cloud resource names (LB, pool, L7 policies) — `octavia` backend only. |
+| `RESOURCE_PREFIX` | `miraige` | Prefix for cloud resource names (LB, pool, L7 policies). `octavia` backend only. |
 | `SENTINEL_DETECTION_THRESHOLD` | `0.75` | Minimum LLM confidence to raise an alert (used when `SENTINEL_STUB=0`). |
 | `ATTACK_VELOCITY_RPS_THRESHOLD` | `20` | Requests/second heuristic threshold. |
 | `HONEYPOT_TTL_SECONDS` | `1800` | Ghost session auto-expiry (30 min). |
@@ -49,7 +49,7 @@ section for the user-store format.
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `AUTH_BACKEND` | `local` | `local` = built-in user store. `oidc` is a reserved seam (validate an IdP JWT) — not implemented yet, fails closed. |
+| `AUTH_BACKEND` | `local` | `local` = built-in user store. `oidc` is a reserved seam (validate an IdP JWT), not implemented yet, fails closed. |
 | `MIRAIGE_USERS_FILE` | _(unset)_ | Path to a `users.json` (see [`users.example.json`](../../users.example.json)) enabling viewer/operator/admin accounts. Unset → a single `admin` synthesized from `DASHBOARD_PASSWORD`. |
 | `MIRAIGE_TOKEN_TTL_S` | `43200` | Bearer-token lifetime in seconds (12 h). |
 
@@ -92,7 +92,7 @@ through these URLs.
 | `MIRAGE_METRICS_URL` | `http://mirage_metrics:8004` |
 | `GHOST_SHELL_URL` | `http://ghost_shell:8080` |
 | `REDIS_URL` | `redis://redis:6379/0` |
-| `ATTACK_TARGET` | `http://fake_portal_prod:8080` — target of the console's red-team launcher. |
+| `ATTACK_TARGET` | `http://fake_portal_prod:8080`, target of the console's red-team launcher. |
 
 ## Advanced tuning
 

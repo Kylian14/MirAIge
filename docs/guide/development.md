@@ -17,7 +17,7 @@ everything through the console at `:8000`.
 
 ## Run the test suite
 
-The suite is pure-Python and offline — no Docker, no network, no cloud:
+The suite is pure-Python and offline, with no Docker, no network, and no cloud:
 
 ```bash
 python -m venv .venv && . .venv/bin/activate
@@ -27,8 +27,8 @@ python -m pytest                    # pytest.ini sets testpaths=tests, asyncio_m
 
 It is **hermetic by design**: outbound URLs point nowhere, Redis is faked, and no
 LLM key is used, so the same run is reproducible anywhere and must stay green on
-every change. A few tests self-skip when an optional tool is absent (e.g. the
-Helm render/lint tests skip without the `helm` binary).
+every change. A few tests self-skip when an optional tool is absent (for example,
+the Helm render/lint tests skip without the `helm` binary).
 
 What the suites cover (`tests/`):
 
@@ -47,15 +47,15 @@ What the suites cover (`tests/`):
 [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) runs on every push and
 pull request:
 
-1. **Lint** — `ruff check services/` (advisory for now).
-2. **Test** — the pytest suite on Python 3.12.
-3. **Stack smoke** — builds and starts the stack, waits for health, and runs an
+1. **Lint**: `ruff check services/` (advisory for now).
+2. **Test**: the pytest suite on Python 3.12.
+3. **Stack smoke**: builds and starts the stack, waits for health, and runs an
    end-to-end attack in offline stub mode.
 
 ## Code style
 
 - Many small, focused files; match the surrounding style.
-- Keep new deception content generation **O(n)** — the whole point is that the
+- Keep new deception content generation **O(n)**: the whole point is that the
   attacker, not the defender, pays. See
   [CONTRIBUTING → Adding a compute-wasting mechanism](../../CONTRIBUTING.md#adding-a-compute-wasting-mechanism)
   and the [mechanisms catalog](mechanisms.md).

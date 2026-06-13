@@ -8,10 +8,10 @@ this handbook is the deeper reference.
 
 | Page | What it covers |
 |------|----------------|
-| [Architecture](architecture.md) | How a request flows through the detection cascade, the orchestrator, and the Ghost Shell — and why the economics favour the defender. |
+| [Architecture](architecture.md) | How a request flows through the detection cascade, the orchestrator, and the Ghost Shell, and why the economics favour the defender. |
 | [Ghost Shell mechanisms](mechanisms.md) | The compute-wasting mechanisms the decoy runs, as implemented in the code. |
 | [Configuration](configuration.md) | Every environment variable: defaults, what it changes, and which ones you must set before exposing the stack. |
-| [Operations](operations.md) | Deploy, harden, scale, and run it — compose overlays, reverse proxies, secrets, multi-instance, Kubernetes. |
+| [Operations](operations.md) | Deploy, harden, scale, and run it: compose overlays, reverse proxies, secrets, multi-instance, Kubernetes. |
 | [Using the console](usage.md) | Sign in, read the pages, launch red-team runs, manage users. |
 | [API reference](api.md) | The BFF (`/api/v1/*`): authentication, roles, and every endpoint. |
 | [Troubleshooting](troubleshooting.md) | Common symptoms (401/403/409/502, strict secrets, isolation, the live stream, Helm) and fixes. |
@@ -26,8 +26,9 @@ attacker it transparently **reroutes that attacker to a procedural decoy** (the
 Ghost Shell) while legitimate users stay on the real service. The decoy then
 spends the attacker's time and tokens on fabricated, never-ending infrastructure.
 
-- **Detection** is a three-tier cascade — cheap Sigma rules first, a calibrated
-  heuristic next, an optional LLM last — so most traffic is judged for free.
+- **Detection** is a three-tier cascade. Cheap Sigma rules run first, a
+  calibrated heuristic next, and an optional LLM last, so most traffic is judged
+  for free.
 - **Decision** is a small state machine per incident, signed agent-to-agent.
 - **Action** is a reroute, abstracted behind a backend interface: an in-process
   mock, a real OpenStack/Octavia load balancer, or a cloud-free Redis-flag +

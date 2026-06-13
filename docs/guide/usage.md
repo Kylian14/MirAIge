@@ -16,12 +16,12 @@ accounts. Your role decides what you can do (see [Roles](api.md#authentication--
 | Page | Shows | Role |
 |------|-------|------|
 | **Overview** | Headline attrition: attacker tokens burned, active engagements, canaries tripped, events screened. | viewer |
-| **Detection** | The three-tier cascade — how many events each tier (T0/T1/T2) eliminated or flagged. | viewer |
+| **Detection** | The three-tier cascade: how many events each tier (T0/T1/T2) eliminated or flagged. | viewer |
 | **Engagements** | Live incidents: each rerouted attacker, its decoy persona/session, target and expiry. Click a row for forensics. | viewer |
 | **Red team** | Launch and watch calibrated attacks. | operator |
 | **Users** | Add/remove accounts, change roles, reset passwords. | admin |
 
-The pages update in real time off a single push stream — no manual refresh.
+The pages update in real time off a single push stream, with no manual refresh.
 
 ## Launch an attack
 
@@ -40,11 +40,11 @@ The levels are calibrated against the detection cascade:
 
 | Level | Calibrated against |
 |-------|--------------------|
-| `noisy` | T0 — instant Sigma match (scanner UA, `/.env`, `/.aws`…) |
-| `evasive` | T1 — fixed UA, paced timing, 4xx bursts |
-| `stealth` | T2 — high UA rotation, slow, encoded LFI |
+| `noisy` | T0: instant Sigma match (scanner UA, `/.env`, `/.aws`…) |
+| `evasive` | T1: fixed UA, paced timing, 4xx bursts |
+| `stealth` | T2: high UA rotation, slow, encoded LFI |
 | `ai-agent` | a real ReAct LLM brain (needs `--ai-endpoint/--ai-key`; else scripted) |
-| `apt` | the honest limit — ultra-patient, multi-IP; may stay under the radar |
+| `apt` | the honest limit: ultra-patient, multi-IP; may stay under the radar |
 | `naive-full` / `hardened-agent` / `apt-bypass` | end-to-end scenarios through the whole Ghost Shell |
 
 ## Read the attrition
@@ -68,4 +68,4 @@ python -m services.api.auth hash 'the-password'
 ## Reset
 
 `POST /api/v1/admin/reset` (operator) clears engagements and detection state
-across all agents — handy between demos.
+across all agents, which is handy between demos.

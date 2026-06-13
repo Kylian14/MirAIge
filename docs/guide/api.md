@@ -43,7 +43,7 @@ A call below the required role returns **403**; a missing/invalid token returns
 | `POST` | `/api/v1/login` | Exchange credentials for a bearer token. |
 | `GET` | `/api/v1/health` | Liveness + reachability of each backend agent. |
 
-### Read surface — `viewer`
+### Read surface: `viewer`
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -56,9 +56,9 @@ A call below the required role returns **403**; a missing/invalid token returns
 | `GET` | `/api/v1/incidents/{request_id}` | One engagement in detail. |
 | `GET` | `/api/v1/metrics` | Current attrition metrics (tokens burned, sessions…). |
 | `GET` | `/api/v1/metrics/agents` | Per-agent token usage. |
-| `GET` | `/api/v1/stream` | Live stream — NDJSON, one `{stats, metrics, incidents}` snapshot per interval (`API_STREAM_INTERVAL_S`) until the client disconnects. The SPA consumes it instead of polling. |
+| `GET` | `/api/v1/stream` | Live stream. NDJSON, one `{stats, metrics, incidents}` snapshot per interval (`API_STREAM_INTERVAL_S`) until the client disconnects. The SPA consumes it instead of polling. |
 
-### Red team — `operator`
+### Red team: `operator`
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -68,11 +68,11 @@ A call below the required role returns **403**; a missing/invalid token returns
 | `GET` | `/api/v1/attacks/{run_id}/logs` | Tail a run's output. |
 | `POST` | `/api/v1/admin/reset` | Reset demo state across all agents. |
 
-`level` is one of the calibrated levels — `noisy`, `evasive`, `stealth`,
+`level` is one of the calibrated levels: `noisy`, `evasive`, `stealth`,
 `ai-agent`, `apt`, `naive-full`, `hardened-agent`, `apt-bypass`. See
 [The attack simulator](../../README.md#the-attack-simulator).
 
-### User management — `admin`
+### User management: `admin`
 
 Available only when a file-backed user store is configured (`MIRAIGE_USERS_FILE`);
 otherwise these return **409**.

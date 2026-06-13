@@ -5,7 +5,7 @@ Common symptoms and what they usually mean. For the variables mentioned see
 
 ## A service won't start (exits immediately)
 
-Almost always `MG_STRICT_SECRETS=1` plus a leftover default/placeholder secret —
+Almost always `MG_STRICT_SECRETS=1` plus a leftover default/placeholder secret:
 the service refuses to run with an unsafe secret. The log names the variable. Set
 a real value for `DASHBOARD_PASSWORD`, `A2A_SHARED_SECRET`, `SECRET_SALT` (and
 `MG_RESET_SECRET` if you set it). `sh deploy/install.sh` generates them for you.
@@ -31,7 +31,7 @@ mirage_metrics, Redis) is network-internal; only the console (`:8000`), portal
 ## I launched an attack but no engagement appears
 
 - Low-signal levels (e.g. `apt`) may stay **below the confidence gate** (0.75) on
-  purpose — no decoy is spun up for a maybe. Watch the **Detection** page to see
+  purpose: no decoy is spun up for a maybe. Watch the **Detection** page to see
   what each tier did, and try a louder level (`noisy`) to confirm the pipeline.
 - In stub mode (`SENTINEL_STUB=1`) only T0/T1 run; that's expected and still
   enough for the full demo.

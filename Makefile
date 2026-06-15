@@ -13,9 +13,9 @@ help:
 	@echo "  clean        Remove build artifacts + __pycache__"
 
 install:
-	@for svc in sentinel orchestrator mcp_server dashboard attack_simulator; do \
-		echo "→ Installing $$svc deps"; \
-		pip install -r services/$$svc/requirements.txt; \
+	@for req in services/*/requirements.txt; do \
+		echo "→ Installing $$(basename $$(dirname $$req)) deps"; \
+		pip install -r "$$req"; \
 	done
 
 up:

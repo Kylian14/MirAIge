@@ -1,0 +1,24 @@
+# Gitleaks configuration for Mir[AI]ge.
+#
+# Mir[AI]ge is a deception tool: the Ghost Shell and Fake Portal deliberately
+# serve synthetic honeytokens (fake credentials, API keys, bcrypt hashes, SSH
+# keys, DB dumps). See SECURITY.md — these are bait and unlock nothing. We
+# allowlist those deception components so the secret scan stays meaningful for
+# the *real* code while not failing on intended decoy content.
+
+title = "Mir[AI]ge gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Deception components and example/template files (see SECURITY.md)"
+paths = [
+  # Deception payloads — synthetic honeytokens by design.
+  '''services/ghost_shell/.*''',
+  '''services/fake_portal/.*''',
+  # Example / template files shipped with placeholders, never real secrets.
+  '''\.env\.example$''',
+  '''.*\.example\.json$''',
+  '''.*/example[^/]*\.(json|ya?ml|env)$''',
+]

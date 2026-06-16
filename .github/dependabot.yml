@@ -1,0 +1,29 @@
+version: 2
+updates:
+  # Keep the pinned GitHub Actions (SHA-pinned in the workflows) up to date.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  # Python dependencies: root tooling + every service requirements file.
+  - package-ecosystem: pip
+    directories:
+      - "/"
+      - "/services/*"
+    schedule:
+      interval: weekly
+    groups:
+      python:
+        patterns: ["*"]
+
+  # Base images used by the service Dockerfiles.
+  - package-ecosystem: docker
+    directories:
+      - "/services/*"
+      - "/deploy/proxy/inline"
+    schedule:
+      interval: weekly

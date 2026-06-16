@@ -12,13 +12,20 @@ title = "Mir[AI]ge gitleaks config"
 useDefault = true
 
 [allowlist]
-description = "Deception components and example/template files (see SECURITY.md)"
+description = "Deception components, decoy payloads, test fixtures and example files (see SECURITY.md)"
 paths = [
   # Deception payloads — synthetic honeytokens by design.
   '''services/ghost_shell/.*''',
   '''services/fake_portal/.*''',
+  # Inline-proxy canary/bait payload served to attackers (honeytokens, not real).
+  '''deploy/proxy/inline/canary_manifest\.json$''',
+  # Attack-simulator test fixtures: synthetic "loot" strings, never real secrets.
+  '''tests/test_attack_simulator\.py$''',
   # Example / template files shipped with placeholders, never real secrets.
   '''\.env\.example$''',
   '''.*\.example\.json$''',
   '''.*/example[^/]*\.(json|ya?ml|env)$''',
+  # Compiled bytecode (gitignored, derived from already-scanned source) — keeps
+  # local `gitleaks dir` working-tree scans clean; never committed anyway.
+  '''\.pyc$''',
 ]

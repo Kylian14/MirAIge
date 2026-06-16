@@ -16,9 +16,13 @@ spec:
       labels:
         app.kubernetes.io/name: redis
     spec:
+      securityContext:
+        {{- toYaml .Values.redis.podSecurityContext | nindent 8 }}
       containers:
         - name: redis
           image: {{ .Values.redis.image | quote }}
+          securityContext:
+            {{- toYaml .Values.redis.securityContext | nindent 12 }}
           ports:
             - containerPort: 6379
           readinessProbe:
@@ -26,6 +30,16 @@ spec:
               port: 6379
             initialDelaySeconds: 3
             periodSeconds: 10
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service

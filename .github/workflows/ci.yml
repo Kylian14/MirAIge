@@ -79,11 +79,12 @@ jobs:
         continue-on-error: true
         run: |
           pip install pip-audit
-          for f in $(find . -name 'requirements*.txt' -not -path '*/node_modules/*'); do
-            echo "::group::pip-audit $f"
-            pip-audit -r "$f" --desc || true
-            echo "::endgroup::"
-          done
+          find . -name 'requirements*.txt' -not -path '*/node_modules/*' -print0 |
+            while IFS= read -r -d '' f; do
+              echo "::group::pip-audit $f"
+              pip-audit -r "$f" --desc || true
+              echo "::endgroup::"
+            done
 
   # ── Secrets: scan the full git history ─────────────────────────────────
   secrets:
@@ -156,7 +157,8 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           persist-credentials: false
-      - name: Trivy filesystem scan (SARIF)
+      # Report-only: dependency vulns + IaC misconfig surfaced in the Security tab.
+      - name: Trivy filesystem scan (SARIF, vuln + misconfig)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           scan-type: fs
@@ -171,12 +173,15 @@ jobs:
         with:
           sarif_file: trivy-fs.sarif
           category: trivy-fs
-      - name: Trivy gate (fail on fixable CRITICAL/HIGH)
+      # Gate: block only on fixable dependency CVEs. IaC misconfig (Helm/K8s
+      # hardening) stays report-only above — the chart is hardened in deploy/helm
+      # but K8s posture rules should not hard-block the build.
+      - name: Trivy gate (fail on fixable CRITICAL/HIGH vulns)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           scan-type: fs
           scan-ref: .
-          scanners: vuln,misconfig
+          scanners: vuln
           format: table
           exit-code: "1"
           ignore-unfixed: true

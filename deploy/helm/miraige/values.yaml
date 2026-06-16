@@ -39,6 +39,20 @@ secrets:
 redis:
   enabled: true
   image: "redis:7-alpine"
+  # The official redis image ships a non-root 'redis' user (uid/gid 999).
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 999
+    runAsGroup: 999
+    fsGroup: 999
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
 
 # ── application services. Only `api` is public (via the Ingress). ─────
 services:
@@ -80,3 +94,24 @@ resources:
   limits:
     cpu: "500m"
     memory: "512Mi"
+
+# ── workload hardening (applied to every application Deployment) ───────
+# The service images bake in a non-root 'app' user (uid/gid 10001); these
+# contexts make Kubernetes enforce it: no root, no privilege escalation, no
+# Linux capabilities, and a read-only root filesystem with a writable /tmp
+# (mounted as an emptyDir by the template). Override per cluster — e.g. set
+# securityContext.readOnlyRootFilesystem to false — if a service must write
+# outside /tmp.
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
+  seccompProfile:
+    type: RuntimeDefault
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL

@@ -16,4 +16,11 @@ COPY deploy/proxy/inline/mirror.lua /usr/local/openresty/lua/mirror.lua
 COPY deploy/proxy/inline/canary.lua /usr/local/openresty/lua/canary.lua
 COPY deploy/proxy/inline/canary_manifest.json /usr/local/openresty/lua/canary_manifest.json
 
+# Run as a non-root user. nginx (master + workers) only needs to write its pid
+# (/run/openresty.pid) and the temp dirs under the nginx prefix; logs go to
+# stdout/stderr and it listens on 8080 (>1024), so no root is required.
+RUN addgroup -S app && adduser -S -G app -u 10001 app \
+    && chown -R app:app /usr/local/openresty/nginx /run
+USER app
+
 EXPOSE 8080

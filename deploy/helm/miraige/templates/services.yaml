@@ -18,10 +18,14 @@ spec:
       labels:
         app.kubernetes.io/name: {{ $kname }}
     spec:
+      securityContext:
+        {{- toYaml $.Values.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ $kname }}
           image: "{{ $.Values.image.registry }}/{{ $.Values.image.repoPrefix }}{{ $name }}:{{ $.Values.image.tag }}"
           imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml $.Values.securityContext | nindent 12 }}
           ports:
             - containerPort: {{ $svc.port }}
           envFrom:
@@ -29,13 +33,14 @@ spec:
                 name: {{ $.Release.Name }}-config
             - secretRef:
                 name: {{ $.Release.Name }}-secrets
-          {{- with $svc.env }}
           env:
-            {{- range $k, $v := . }}
+            # Read-only rootfs: don't let CPython write .pyc bytecode to /app.
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
+            {{- range $k, $v := $svc.env }}
             - name: {{ $k }}
               value: {{ $v | quote }}
             {{- end }}
-          {{- end }}
           readinessProbe:
             tcpSocket:
               port: {{ $svc.port }}
@@ -48,6 +53,12 @@ spec:
             periodSeconds: 20
           resources:
             {{- toYaml $.Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service

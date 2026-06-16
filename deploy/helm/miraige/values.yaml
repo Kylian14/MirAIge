@@ -39,12 +39,13 @@ secrets:
 redis:
   enabled: true
   image: "redis:7-alpine"
-  # The official redis image ships a non-root 'redis' user (uid/gid 999).
+  # Run redis as a high, host-collision-free uid/gid (>10000). redis needs no
+  # passwd entry; its only writable path (/data) is an emptyDir owned via fsGroup.
   podSecurityContext:
     runAsNonRoot: true
-    runAsUser: 999
-    runAsGroup: 999
-    fsGroup: 999
+    runAsUser: 10001
+    runAsGroup: 10001
+    fsGroup: 10001
     seccompProfile:
       type: RuntimeDefault
   securityContext:

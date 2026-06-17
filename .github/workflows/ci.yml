@@ -522,14 +522,23 @@ jobs:
 
       - name: Install cosign
         uses: sigstore/cosign-installer@398d4b0eeef1380460a10c8013a76f728fb906ac # v3
+        with:
+          cosign-release: "v3.1.1" # pin: avoid the installer's non-deterministic main build
 
-      - name: Sign image + attest SBOM (keyless / Sigstore)
+      - name: Sign image (keyless / Sigstore)
         env:
           DIGEST: ${{ steps.build.outputs.digest }}
-        run: |
-          cosign sign --yes "${IMAGE}@${DIGEST}"
-          cosign attest --yes --type cyclonedx \
-            --predicate "sbom-${SERVICE}.cdx.json" "${IMAGE}@${DIGEST}"
+        run: cosign sign --yes "${IMAGE}@${DIGEST}"
+
+      # SBOM and provenance both go through GitHub's attest actions (OCI referrers +
+      # attestations API), so they don't clobber each other the way cosign attest did.
+      - name: Attest the SBOM (CycloneDX)
+        uses: actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e # v4.1.0
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          sbom-path: sbom-${{ matrix.service }}.cdx.json
+          push-to-registry: true
 
       - name: Generate SLSA build provenance
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0

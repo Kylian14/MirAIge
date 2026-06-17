@@ -39,12 +39,12 @@ cosign verify "$IMAGE" \
 
 ## Verify the SBOM attestation
 
+The CycloneDX SBOM is attached as a GitHub attestation, the same mechanism as the
+build provenance below:
+
 ```bash
-cosign verify-attestation "$IMAGE" \
-  --type cyclonedx \
-  --certificate-identity-regexp "^https://github.com/<owner>/<repo>/.github/workflows/ci.yml@.*" \
-  --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
-  | jq -r '.payload | @base64d | fromjson | .predicate' > sbom.cdx.json
+gh attestation verify "oci://$IMAGE" --owner <owner> \
+  --predicate-type https://cyclonedx.org/bom
 ```
 
 ## Verify the build provenance

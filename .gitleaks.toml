@@ -14,9 +14,13 @@ useDefault = true
 [allowlist]
 description = "Deception components, decoy payloads, test fixtures and example files (see SECURITY.md)"
 paths = [
-  # Deception payloads — synthetic honeytokens by design.
+  # Ghost Shell is a deception service: its source legitimately embeds synthetic
+  # honeytokens (fake API keys, DB passwords, AWS creds) across main.py,
+  # cred_graph.py, library/, etc. — bait, never real. SECURITY.md confirms real
+  # secrets live only in env vars, so the whole service dir is allowlisted.
+  # Fake Portal is intentionally NOT allowlisted: its source is secret-clean and
+  # stays scanned, so a future real leak there is still caught.
   '''services/ghost_shell/.*''',
-  '''services/fake_portal/.*''',
   # Inline-proxy canary/bait payload served to attackers (honeytokens, not real).
   '''deploy/proxy/inline/canary_manifest\.json$''',
   # Attack-simulator test fixtures: synthetic "loot" strings, never real secrets.

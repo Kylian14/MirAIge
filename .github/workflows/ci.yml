@@ -413,6 +413,9 @@ jobs:
           file: services/${{ matrix.service }}/Dockerfile
           load: true
           tags: localscan/${{ matrix.service }}:ci
+          # Same labels as the pushed build so the scanned image is byte-identical
+          # (same config digest) to what is published below.
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service }}
 

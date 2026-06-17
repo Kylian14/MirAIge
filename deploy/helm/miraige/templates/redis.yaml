@@ -16,6 +16,7 @@ spec:
       labels:
         app.kubernetes.io/name: redis
     spec:
+      automountServiceAccountToken: false
       securityContext:
         {{- toYaml .Values.redis.podSecurityContext | nindent 8 }}
       containers:

@@ -27,3 +27,12 @@ updates:
       - "/deploy/proxy/inline"
     schedule:
       interval: weekly
+
+  # The Vite/React SPA built into the api image (services/api/Dockerfile stage 1).
+  - package-ecosystem: npm
+    directory: /web
+    schedule:
+      interval: weekly
+    groups:
+      web:
+        patterns: ["*"]

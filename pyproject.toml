@@ -1,6 +1,6 @@
 [project]
 name = "miraige"
-version = "0.1.0"
+version = "0.2.0"
 description = "Mir[AI]ge — control CLI for the defensive-deception stack"
 readme = "README.md"
 requires-python = ">=3.9"

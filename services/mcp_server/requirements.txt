@@ -1,13 +1,13 @@
-fastapi>=0.110
-uvicorn[standard]>=0.27
+fastapi>=0.137.1
+uvicorn[standard]>=0.49.0
 # Security floors (pip-audit): patched transitive deps of fastapi/uvicorn.
 starlette>=1.3.1
 python-dotenv>=1.2.2
-pydantic>=2.6
-httpx>=0.27
-redis>=5.0          # REROUTE_BACKEND=redis (cloud-free inline-proxy backend)
+pydantic>=2.13.4
+httpx>=0.28.1
+redis>=8.0.0          # REROUTE_BACKEND=redis (cloud-free inline-proxy backend)
 
 # OPTIONAL — only needed for a real OVH/OpenStack reroute (REROUTE_BACKEND=octavia).
 # The default mock backend (REROUTE_BACKEND=mock) does not import these.
 ovh>=1.2
-openstacksdk>=3.0
+openstacksdk>=4.16.0

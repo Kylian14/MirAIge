@@ -122,3 +122,66 @@ def test_unmanaged_store_409(client, monkeypatch):
     assert client.post(
         "/api/v1/users", json={"username": "x", "role": "viewer", "password": "p"}, headers=_h(tok)
     ).status_code == 409
+
+
+def test_load_users_malformed_json_fallback(tmp_path, monkeypatch):
+    path = tmp_path / "malformed.json"
+    path.write_text("{invalid json", encoding="utf-8")
+    monkeypatch.setenv("MIRAIGE_USERS_FILE", str(path))
+    users = auth._load_users()
+    assert "admin" in users
+    assert users["admin"].role == "admin"
+
+
+def test_load_users_role_skips_invalid(tmp_path, monkeypatch):
+    path = tmp_path / "users.json"
+    path.write_text(
+        json.dumps({"users": [
+            {"username": "good", "role": "viewer", "password": "pw"},
+            {"username": "bad", "role": "super-admin", "password": "pw"},
+            {"username": "", "role": "viewer", "password": "pw"}
+        ]}),
+        encoding="utf-8"
+    )
+    monkeypatch.setenv("MIRAIGE_USERS_FILE", str(path))
+    users = auth._load_users()
+    assert "good" in users
+    assert "bad" not in users
+    assert "" not in users
+
+
+def test_create_user_value_errors(store):
+    with pytest.raises(ValueError, match="username is required"):
+        auth.create_user("", "viewer", "pass")
+    with pytest.raises(ValueError, match="invalid role"):
+        auth.create_user("user", "invalid-role", "pass")
+    with pytest.raises(ValueError, match="password is required"):
+        auth.create_user("user", "viewer", "")
+    with pytest.raises(ValueError, match="user already exists"):
+        auth.create_user("boss", "viewer", "pass")
+
+
+def test_set_role_errors(store):
+    with pytest.raises(ValueError, match="invalid role"):
+        auth.set_role("val", "invalid-role")
+    with pytest.raises(KeyError):
+        auth.set_role("nonexistent", "viewer")
+
+
+def test_set_password_errors(store):
+    with pytest.raises(ValueError, match="password is required"):
+        auth.set_password("val", "")
+    with pytest.raises(KeyError):
+        auth.set_password("nonexistent", "password")
+
+
+def test_delete_user_errors(store):
+    with pytest.raises(KeyError):
+        auth.delete_user("nonexistent")
+
+
+def test_oidc_backend_blocks_all(monkeypatch):
+    monkeypatch.setattr(auth, "BACKEND", "oidc")
+    assert auth.login_enabled() is False
+    assert auth.identity_from_request("Bearer some-token") is None
+

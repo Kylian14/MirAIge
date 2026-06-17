@@ -217,7 +217,7 @@ Since then, the OVH-specific parts have been deliberately separated from the cor
 project runs anywhere:
 
 - **Offline by default.** Detection, the Ghost Shell decoy, the metrics and the dashboard
-  need no cloud account, no API key and no GPU. `docker compose up` is the whole demo.
+  need no cloud account, no API key, no GPU. `docker compose up` is the whole demo.
 - **The cloud is opt-in.** The Octavia reroute sits behind a single boundary
   ([`services/mcp_server/backends/octavia.py`](services/mcp_server/backends/octavia.py)) and is mocked
   in-process unless you set `REROUTE_BACKEND=octavia`. Nothing else in the stack imports it, so

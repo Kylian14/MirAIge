@@ -465,3 +465,54 @@ def test_heuristics_compute_rps_and_dominant_vector():
     assert heuristics.compute_rps(window) == pytest.approx(1.25, abs=0.01)
     # traversal paths -> dominant vector TRAVERSAL
     assert heuristics.dominant_vector(window) == AttackVector.TRAVERSAL
+
+
+def test_heuristics_compute_rps_edge_cases():
+    # 0 or 1 events
+    assert heuristics.compute_rps([]) == 0.0
+    assert heuristics.compute_rps([_le(datetime.now(tz=timezone.utc), "/", 200)]) == 0.0
+
+    # dt < 0.001
+    now = datetime.now(tz=timezone.utc)
+    window = [_le(now, "/", 200), _le(now, "/", 200)]
+    assert heuristics.compute_rps(window) == 2.0
+
+
+def test_heuristics_looks_suspicious_edge_cases():
+    # empty window
+    assert heuristics.looks_suspicious([], rps_threshold=10.0) is False
+
+    # 4xx ratio threshold >= 5 codes
+    base = datetime.now(tz=timezone.utc)
+    window_4xx = [
+        _le(base, "/", 404),
+        _le(base, "/", 401),
+        _le(base, "/", 403),
+        _le(base, "/", 200),
+        _le(base, "/", 200),
+    ]
+    assert heuristics.looks_suspicious(window_4xx, rps_threshold=10.0) is True
+
+    # 4xx ratio but < 5 codes
+    window_4xx_small = [
+        _le(base, "/", 404),
+        _le(base, "/", 404),
+        _le(base, "/", 200),
+    ]
+    assert heuristics.looks_suspicious(window_4xx_small, rps_threshold=10.0) is False
+
+
+def test_heuristics_dominant_vector_edge_cases():
+    base = datetime.now(tz=timezone.utc)
+    # fallback to RECON when no matches
+    window_none = [_le(base, "/", 200)]
+    assert heuristics.dominant_vector(window_none) == AttackVector.RECON
+
+    # POST to brute force path
+    window_brute = [_le(base, "/login", 200, method="POST")]
+    assert heuristics.dominant_vector(window_brute) == AttackVector.BRUTE_FORCE
+
+    # GET to brute force path does not count as BRUTE_FORCE
+    window_brute_get = [_le(base, "/login", 200, method="GET")]
+    assert heuristics.dominant_vector(window_brute_get) == AttackVector.RECON
+

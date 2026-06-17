@@ -523,7 +523,7 @@ jobs:
       - name: Install cosign
         uses: sigstore/cosign-installer@398d4b0eeef1380460a10c8013a76f728fb906ac # v3
         with:
-          cosign-release: "v3.1.1" # pin: avoid the installer's non-deterministic main build
+          cosign-release: "v2.5.2" # pinned; this installer can't fetch v3.x (no detached .sig asset)
 
       - name: Sign image (keyless / Sigstore)
         env:

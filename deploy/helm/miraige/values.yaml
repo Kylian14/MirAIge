@@ -1,12 +1,12 @@
 # ── images ────────────────────────────────────────────────────────────
 # Built from services/<name>/Dockerfile and published as
-# <registry>/<repoPrefix><name>:<tag> (e.g. ghcr.io/kylian14/miraige-sentinel:0.2.0).
+# <registry>/<repoPrefix><name>:<tag> (e.g. ghcr.io/kylian14/miraige-sentinel:0.2.1).
 # They are NOT on a public registry yet — publish them, then point image.registry
 # at wherever you pushed.
 image:
   registry: ghcr.io/kylian14
   repoPrefix: "miraige-"
-  tag: "0.2.0"
+  tag: "0.2.1"
   pullPolicy: IfNotPresent
 
 # ── shared, non-secret env (mirrors .env CORE + in-cluster service URLs) ──

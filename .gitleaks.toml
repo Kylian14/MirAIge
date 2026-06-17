@@ -1,0 +1,35 @@
+# Gitleaks configuration for Mir[AI]ge.
+#
+# Mir[AI]ge is a deception tool: the Ghost Shell and Fake Portal deliberately
+# serve synthetic honeytokens (fake credentials, API keys, bcrypt hashes, SSH
+# keys, DB dumps). See SECURITY.md — these are bait and unlock nothing. We
+# allowlist those deception components so the secret scan stays meaningful for
+# the *real* code while not failing on intended decoy content.
+
+title = "Mir[AI]ge gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Deception components, decoy payloads, test fixtures and example files (see SECURITY.md)"
+paths = [
+  # Ghost Shell is a deception service: its source legitimately embeds synthetic
+  # honeytokens (fake API keys, DB passwords, AWS creds) across main.py,
+  # cred_graph.py, library/, etc. — bait, never real. SECURITY.md confirms real
+  # secrets live only in env vars, so the whole service dir is allowlisted.
+  # Fake Portal is intentionally NOT allowlisted: its source is secret-clean and
+  # stays scanned, so a future real leak there is still caught.
+  '''services/ghost_shell/.*''',
+  # Inline-proxy canary/bait payload served to attackers (honeytokens, not real).
+  '''deploy/proxy/inline/canary_manifest\.json$''',
+  # Attack-simulator test fixtures: synthetic "loot" strings, never real secrets.
+  '''tests/test_attack_simulator\.py$''',
+  # Example / template files shipped with placeholders, never real secrets.
+  '''\.env\.example$''',
+  '''.*\.example\.json$''',
+  '''.*/example[^/]*\.(json|ya?ml|env)$''',
+  # Compiled bytecode (gitignored, derived from already-scanned source) — keeps
+  # local `gitleaks dir` working-tree scans clean; never committed anyway.
+  '''\.pyc$''',
+]

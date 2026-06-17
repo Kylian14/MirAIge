@@ -16,6 +16,7 @@ this handbook is the deeper reference.
 | [API reference](api.md) | The BFF (`/api/v1/*`): authentication, roles, and every endpoint. |
 | [Troubleshooting](troubleshooting.md) | Common symptoms (401/403/409/502, strict secrets, isolation, the live stream, Helm) and fixes. |
 | [Development & testing](development.md) | Dev environment, the test suite, and CI (the contribution workflow is in CONTRIBUTING.md). |
+| [Supply chain](supply-chain.md) | The secure release pipeline and how to verify signed images, SBOMs, and build provenance. |
 | [Glossary](glossary.md) | The project's terms in one place. |
 
 ## At a glance

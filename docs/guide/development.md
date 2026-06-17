@@ -45,12 +45,37 @@ What the suites cover (`tests/`):
 ## Continuous integration
 
 [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) runs on every push and
-pull request:
+pull request. All third-party actions are pinned by commit SHA and jobs run with
+least-privilege `GITHUB_TOKEN` permissions.
 
-1. **Lint**: `ruff check services/` (advisory for now).
+**Quality & function**
+
+1. **Lint**: `ruff check services/`.
 2. **Test**: the pytest suite on Python 3.12.
 3. **Stack smoke**: builds and starts the stack, waits for health, and runs an
    end-to-end attack in offline stub mode.
+
+**Security gates** (block the build)
+
+4. **Secret scan**: gitleaks over the git history (deception honeytokens are
+   allowlisted in [`.gitleaks.toml`](../../.gitleaks.toml)).
+5. **Filesystem scan**: Trivy for vulnerable dependencies and IaC misconfig —
+   fails on *fixable* `CRITICAL`/`HIGH`.
+6. **Dockerfile lint**: hadolint on every service image.
+7. **Image scan**: each service image is built and Trivy-scanned (same gate)
+   before it could ever be released.
+
+**Security reports** (surfaced in the repo's Security tab, non-blocking)
+
+8. **CodeQL** ([`codeql.yml`](../../.github/workflows/codeql.yml)) and bandit
+   rules via ruff for SAST, **pip-audit** for dependency advisories,
+   **actionlint** + **zizmor** for workflow security, and **OpenSSF Scorecard**
+   ([`scorecard.yml`](../../.github/workflows/scorecard.yml)) for repo posture.
+   [Dependabot](../../.github/dependabot.yml) keeps actions, pip, and base images
+   up to date.
+
+On a `v*` tag the **release** pipeline scans, pushes, signs, SBOMs, and attests
+each image — see [Supply chain](supply-chain.md).
 
 ## Code style
 

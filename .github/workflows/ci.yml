@@ -351,6 +351,49 @@ jobs:
           ignore-unfixed: true
           severity: CRITICAL,HIGH
 
+  # ── Inline proxy image scan (report-only) ─────────────────────────────
+  # The openresty base image's CVEs are upstream's to fix (Dependabot tracks
+  # the base), so they surface in the Security tab without blocking the build.
+  proxy-scan:
+    name: Proxy image scan (report-only)
+    if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+    needs: [tests]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - name: Build proxy image (local only)
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: deploy/proxy/inline/Dockerfile
+          load: true
+          tags: localscan/proxy:ci
+          cache-from: type=gha,scope=proxy
+          cache-to: type=gha,mode=max,scope=proxy
+      - name: Trivy image scan (SARIF, report-only)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: localscan/proxy:ci
+          format: sarif
+          output: trivy-proxy.sarif
+          severity: CRITICAL,HIGH
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@dd903d2e4f5405488e5ef1422510ee31c8b32357 # v3
+        with:
+          sarif_file: trivy-proxy.sarif
+          category: trivy-image-proxy
+
   # ── Release: build, scan-gate, push, SBOM, sign, provenance ────────────
   publish:
     name: Release (${{ matrix.service }})
@@ -454,6 +497,12 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.service }}
           provenance: false
+
+      - name: Assert a release digest was produced
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          test -n "$DIGEST" || { echo "::error::empty image digest — refusing to sign/attest"; exit 1; }
 
       - name: Generate SBOM (CycloneDX)
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0

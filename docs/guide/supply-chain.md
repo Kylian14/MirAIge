@@ -16,6 +16,11 @@ pushed, **scanned, then signed and attested** by the release pipeline
 Images are referenced as `ghcr.io/<owner>/miraige-<service>` (e.g.
 `miraige-api`, `miraige-sentinel`, …).
 
+> **Tip:** for the strongest guarantee, verify by **digest** rather than tag
+> (`ghcr.io/<owner>/miraige-api@sha256:…`) — a tag is mutable, a digest is the
+> exact signed artifact. The version tag, `latest`, and `sha-<commit>` all
+> resolve to the same signed digest.
+
 > The full CI pipeline (lint, SAST/CodeQL, dependency & secret scanning,
 > Dockerfile lint, image scan) is described in
 > [Development & testing](development.md). Note that the Ghost Shell and Fake

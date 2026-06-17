@@ -22,6 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         # python services + the TypeScript SPA in web/ (bundled into the api image).
+        # Workflow security is covered separately by actionlint + zizmor.
         language: [python, javascript-typescript]
     steps:
       - uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4

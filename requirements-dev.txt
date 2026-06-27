@@ -2,25 +2,25 @@
 # Les tests tournent hors Docker : les imports lourds optionnels (xgboost,
 # codecarbon, openstacksdk) sont volontairement absents — les services ont des
 # fallbacks lazy que les tests de caractérisation figent explicitement.
-fastapi>=0.128.8
-uvicorn[standard]>=0.39.0
+fastapi>=0.138.1
+uvicorn[standard]>=0.49.0
 httpx>=0.28.1
 pydantic>=2.13.4
 python-multipart>=0.0.32
 pyyaml>=6.0.3
-redis>=7.0.1
+redis>=8.0.1
 jinja2>=3.1.6
-numpy>=2.0.2
+numpy>=2.2.6
 tiktoken>=0.13.0
 
 # Security floors for transitive deps flagged by pip-audit, pinned to patched
 # versions (resolution verified compatible with fastapi/uvicorn/tiktoken).
 # Note: starlette>=1.3.1 implies fastapi>=0.137.1 (first release to drop the
-# starlette upper-bound) — which is what fastapi>=0.128.8 already resolves to.
+# starlette upper-bound) — which is what fastapi>=0.138.1 already resolves to.
 starlette>=1.3.1
 python-dotenv>=1.2.2
-requests>=2.33.0
+requests>=2.34.2
 urllib3>=2.7.0
 
-pytest>=9.0.3
-pytest-asyncio>=1.2.0
+pytest>=9.1.1
+pytest-asyncio>=1.4.0
